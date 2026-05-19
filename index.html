@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>نظام مخزن الأدوية البيولوجية - الجهاز الهضمي</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --teal:#0F6E56;--teal-light:#E1F5EE;--teal-mid:#1D9E75;
+  --blue-dark:#042C53;--blue:#185FA5;--blue-light:#E6F1FB;--blue-mid:#378ADD;
+  --amber:#BA7517;--amber-light:#FAEEDA;--amber-mid:#EF9F27;
+  --red:#A32D2D;--red-light:#FCEBEB;--red-mid:#E24B4A;
+  --green:#3B6D11;--green-light:#EAF3DE;
+  --purple:#534AB7;--purple-light:#EEEDFE;
+  --surf:#fff;--surf2:#f5f6f8;--bdr:rgba(0,0,0,0.1);--bdr2:rgba(0,0,0,0.18);
+  --txt:#1a1a2e;--muted:#6b7280;
+}
+body.dark{
+  --teal-light:#0a3d2e;--blue-light:#0a1f38;--amber-light:#2a1c04;--red-light:#2a0a0a;--green-light:#0e1f09;--purple-light:#130e34;
+  --surf:#1a1d2e;--surf2:#12141f;--bdr:rgba(255,255,255,0.09);--bdr2:rgba(255,255,255,0.16);
+  --txt:#dde3f0;--muted:#8892a4;
+}
+body.dark .hdr{background:#010c1a;}
+body.dark .nav{background:#020d1c;}
+body.dark .dt th{background:#010c1a;}
+
+/* 3D ICON */
+.ico3d{width:46px;height:46px;border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;transition:transform 0.18s;}
+.ico3d:hover{transform:translateY(-2px);}
+.ico3d i{font-size:22px;color:#fff;}
+.ico3d.teal{background:linear-gradient(145deg,#2DC99A,#0F6E56);box-shadow:0 4px 14px rgba(15,110,86,0.45),inset 0 1px 0 rgba(255,255,255,0.3);}
+.ico3d.blue{background:linear-gradient(145deg,#4D9FE8,#185FA5);box-shadow:0 4px 14px rgba(24,95,165,0.45),inset 0 1px 0 rgba(255,255,255,0.3);}
+.ico3d.amber{background:linear-gradient(145deg,#F5C34A,#BA7517);box-shadow:0 4px 14px rgba(186,117,23,0.45),inset 0 1px 0 rgba(255,255,255,0.3);}
+.ico3d.red{background:linear-gradient(145deg,#F07070,#A32D2D);box-shadow:0 4px 14px rgba(163,45,45,0.45),inset 0 1px 0 rgba(255,255,255,0.3);}
+.ico3d.purple{background:linear-gradient(145deg,#8B84E0,#534AB7);box-shadow:0 4px 14px rgba(83,74,183,0.45),inset 0 1px 0 rgba(255,255,255,0.3);}
+.ico3d.navy{background:linear-gradient(145deg,#1a5fa8,#042C53);box-shadow:0 4px 14px rgba(4,44,83,0.5),inset 0 1px 0 rgba(255,255,255,0.25);}
+.ico3d.green{background:linear-gradient(145deg,#7CC846,#3B6D11);box-shadow:0 4px 14px rgba(59,109,17,0.45),inset 0 1px 0 rgba(255,255,255,0.3);}
+
+/* STAT 3D ICON */
+.sc-ico-wrap{width:44px;height:44px;border-radius:13px;display:flex;align-items:center;justify-content:center;margin:0 auto 9px;}
+.sc-ico-wrap i{font-size:21px;color:#fff;}
+.sc-ico-wrap.teal{background:linear-gradient(145deg,#2DC99A,#0F6E56);box-shadow:0 3px 10px rgba(15,110,86,0.4),inset 0 1px 0 rgba(255,255,255,0.25);}
+.sc-ico-wrap.blue{background:linear-gradient(145deg,#4D9FE8,#185FA5);box-shadow:0 3px 10px rgba(24,95,165,0.4),inset 0 1px 0 rgba(255,255,255,0.25);}
+.sc-ico-wrap.amber{background:linear-gradient(145deg,#F5C34A,#BA7517);box-shadow:0 3px 10px rgba(186,117,23,0.4),inset 0 1px 0 rgba(255,255,255,0.25);}
+.sc-ico-wrap.red{background:linear-gradient(145deg,#F07070,#A32D2D);box-shadow:0 3px 10px rgba(163,45,45,0.4),inset 0 1px 0 rgba(255,255,255,0.25);}
+.sc-ico-wrap.purple{background:linear-gradient(145deg,#8B84E0,#534AB7);box-shadow:0 3px 10px rgba(83,74,183,0.4),inset 0 1px 0 rgba(255,255,255,0.25);}
+
+/* BACK TO HOME BUTTON inside pages */
+.pg-back{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;background:var(--surf);border:0.5px solid var(--bdr2);color:var(--muted);font-family:'Cairo',sans-serif;font-size:12.5px;font-weight:500;cursor:pointer;transition:all 0.18s;margin-bottom:14px;}
+.pg-back:hover{background:var(--teal-light);color:var(--teal);border-color:var(--teal-mid);}
+.pg-back i{font-size:15px;}
+
+/* THEME TOGGLE */
+.theme-toggle{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);border-radius:20px;padding:5px 11px;color:#fff;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:5px;transition:all 0.2s;}
+.theme-toggle:hover{background:rgba(255,255,255,0.2);}
+
+/* BACK BUTTON */
+.back-btn{padding:9px 14px;font-family:'Cairo',sans-serif;font-size:13px;font-weight:500;color:rgba(255,255,255,0.55);background:none;border:none;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-1px;display:flex;align-items:center;gap:5px;white-space:nowrap;transition:all 0.2s;border-left:1px solid rgba(255,255,255,0.07);padding-left:16px;margin-left:4px;}
+.back-btn:hover{color:rgba(255,255,255,0.9);background:rgba(255,255,255,0.07);}
+html,body{min-height:100%;font-family:'Cairo',sans-serif;direction:rtl;background:var(--surf2);color:var(--txt);}
+.hdr{background:#042C53;position:sticky;top:0;z-index:200;}
+.hdr-inner{display:flex;align-items:center;gap:14px;padding:13px 22px;}
+.logo{width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,0.12);border:1.5px solid rgba(255,255,255,0.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.hdr-text h1{font-family:'Tajawal',sans-serif;font-size:18px;font-weight:800;color:#fff;line-height:1.3;}
+.hdr-text p{font-size:11px;color:rgba(255,255,255,0.6);}
+.hdr-right{margin-right:auto;display:flex;align-items:center;gap:8px;}
+.doc-badge{background:#0F6E56;border:1px solid rgba(255,255,255,0.2);border-radius:20px;padding:5px 12px;font-size:12px;color:#fff;display:flex;align-items:center;gap:5px;}
+.icon-btn{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:6px 10px;color:#fff;cursor:pointer;font-size:16px;position:relative;}
+.notif-dot{width:7px;height:7px;background:#E24B4A;border-radius:50%;position:absolute;top:4px;right:4px;display:none;}
+.nav{display:flex;background:#031e3a;padding:0 18px;overflow-x:auto;border-bottom:1px solid rgba(255,255,255,0.06);}
+.nav::-webkit-scrollbar{height:3px;}.nav::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.2);}
+.tb{padding:11px 14px;font-family:'Cairo',sans-serif;font-size:13px;font-weight:500;color:rgba(255,255,255,0.5);background:none;border:none;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-1px;display:flex;align-items:center;gap:6px;white-space:nowrap;transition:color 0.2s;}
+.tb.on{color:#5DCAA5;border-bottom-color:#5DCAA5;}.tb:hover:not(.on){color:rgba(255,255,255,0.85);}
+.pg{padding:18px;display:none;}.pg.on{display:block;}
+.sg{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:16px;}
+.sc{background:var(--surf);border-radius:12px;border:0.5px solid var(--bdr);padding:13px;text-align:center;}
+.sc-ico{font-size:20px;margin-bottom:5px;}.sc-val{font-size:22px;font-weight:700;font-family:'Tajawal',sans-serif;}.sc-lbl{font-size:11px;color:var(--muted);}
+.sc.t .sc-val{color:var(--teal);}.sc.b .sc-val{color:var(--blue);}.sc.a .sc-val{color:var(--amber);}.sc.r .sc-val{color:var(--red);}.sc.p .sc-val{color:var(--purple);}
+.sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;}
+.stl{font-size:15px;font-weight:600;color:var(--txt);display:flex;align-items:center;gap:7px;}.stl i{color:var(--teal);}
+.tw{background:var(--surf);border-radius:12px;border:0.5px solid var(--bdr);overflow:auto;margin-bottom:16px;}
+.dt{width:100%;border-collapse:collapse;font-size:12.5px;min-width:580px;}
+.dt th{background:#042C53;color:rgba(255,255,255,0.9);padding:10px 12px;text-align:right;font-weight:500;font-size:11.5px;white-space:nowrap;}
+.dt td{padding:10px 12px;border-bottom:0.5px solid var(--bdr);vertical-align:middle;}
+.dt tr:last-child td{border-bottom:none;}.dt tr:hover td{background:var(--surf2);}
+.dn{font-weight:600;color:var(--blue);font-size:13px;}.dc{font-size:11px;color:var(--muted);}
+.bdg{display:inline-block;padding:3px 8px;border-radius:20px;font-size:11px;font-weight:500;}
+.bdg-ok{background:var(--green-light);color:var(--green);}.bdg-w{background:var(--amber-light);color:var(--amber);}.bdg-r{background:var(--red-light);color:var(--red);}
+.bdg-b{background:var(--blue-light);color:var(--blue);}.bdg-p{background:var(--purple-light);color:var(--purple);}.bdg-t{background:var(--teal-light);color:var(--teal);}
+.pb{width:65px;height:5px;background:var(--surf2);border-radius:3px;overflow:hidden;}.pf{height:100%;border-radius:3px;}
+.pf-ok{background:var(--teal-mid);}.pf-w{background:var(--amber-mid);}.pf-r{background:var(--red-mid);}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 15px;border-radius:8px;font-family:'Cairo',sans-serif;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:opacity 0.15s;}
+.btn:hover{opacity:0.85;}.btn-p{background:#042C53;color:#fff;}.btn-s{background:var(--surf);color:var(--txt);border:0.5px solid var(--bdr2);}
+.btn-d{background:var(--red-light);color:var(--red);border:0.5px solid #F7C1C1;}.btn-w{background:var(--amber-light);color:var(--amber);border:0.5px solid #FAC775;}
+.btn-sm{padding:5px 9px;font-size:11.5px;}.row-actions{display:flex;gap:5px;}
+.fs{background:var(--surf);border-radius:12px;border:0.5px solid var(--bdr);padding:16px;margin-bottom:13px;}
+.fst{font-size:14px;font-weight:600;color:var(--txt);margin-bottom:12px;padding-bottom:10px;border-bottom:0.5px solid var(--bdr);display:flex;align-items:center;gap:7px;}
+.fst i{color:var(--teal);}
+.fg{display:flex;flex-direction:column;gap:4px;}.fg label{font-size:11.5px;color:var(--muted);font-weight:500;}
+.fg input,.fg select,.fg textarea{padding:8px 11px;border-radius:8px;border:0.5px solid var(--bdr2);background:var(--surf);color:var(--txt);font-family:'Cairo',sans-serif;font-size:13px;width:100%;}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--teal-mid);}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:11px;}.fgrid4{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:11px;}.ffull{grid-column:1/-1;}
+.sw{position:relative;}.sw i{position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:14px;pointer-events:none;}
+.si{padding:8px 32px 8px 11px;border-radius:8px;border:0.5px solid var(--bdr);background:var(--surf);font-family:'Cairo',sans-serif;font-size:13px;color:var(--txt);min-width:150px;}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;}
+.pcard{background:var(--surf);border-radius:12px;border:0.5px solid var(--bdr);padding:14px;}
+.pcard.admin-view{border-right:3px solid var(--blue);}
+.phdr{display:flex;align-items:center;gap:10px;margin-bottom:11px;}
+.pav{width:40px;height:40px;border-radius:50%;background:#042C53;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px;flex-shrink:0;}
+.pname{font-size:13.5px;font-weight:600;color:var(--txt);}.pid{font-size:11px;color:var(--muted);}
+.pinfo{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:9px;}
+.pi-r{display:flex;flex-direction:column;gap:2px;}.pi-l{font-size:10.5px;color:var(--muted);}.pi-v{font-size:12px;color:var(--txt);font-weight:500;}
+.pdrug{padding:7px 10px;background:var(--teal-light);border-radius:8px;display:flex;align-items:center;gap:6px;margin-bottom:7px;}
+.pdrug i{color:var(--teal);font-size:14px;}.pdrug span{font-size:12px;color:var(--teal);font-weight:600;}
+.pact{display:flex;gap:5px;justify-content:flex-end;}
+.doc-tag{font-size:10.5px;background:var(--blue-light);color:var(--blue);padding:2px 8px;border-radius:10px;display:inline-flex;align-items:center;gap:4px;margin-bottom:7px;}
+.slist{display:flex;flex-direction:column;gap:8px;}
+.si-card{background:var(--surf);border-radius:10px;border:0.5px solid var(--bdr);padding:12px 14px;display:flex;align-items:center;gap:11px;flex-wrap:wrap;}
+.si-ico{width:36px;height:36px;border-radius:9px;background:var(--blue-light);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.si-ico i{color:var(--blue);font-size:18px;}.si-info{flex:1;min-width:150px;}
+.si-drug{font-size:13px;font-weight:600;color:var(--txt);}.si-meta{font-size:11px;color:var(--muted);margin-top:2px;}
+.si-dates{min-width:155px;}.si-d{font-size:11px;color:var(--muted);margin-bottom:2px;}.si-d span{font-weight:600;color:var(--txt);}
+.si-d.warn span{color:var(--amber);}.si-d.danger span{color:var(--red);}
+.alert-list{display:flex;flex-direction:column;gap:7px;margin-bottom:14px;}
+.alert-item{display:flex;align-items:center;gap:9px;padding:9px 13px;border-radius:8px;}
+.alert-item.danger{background:var(--red-light);border:0.5px solid #F7C1C1;}.alert-item.warn{background:var(--amber-light);border:0.5px solid #FAC775;}
+.alert-item i{font-size:15px;}.alert-item.danger i{color:var(--red);}.alert-item.warn i{color:var(--amber);}
+.alert-txt{font-size:12.5px;color:var(--txt);}.alert-txt strong{font-weight:600;}
+.report-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:11px;margin-bottom:16px;}
+.rcard{background:var(--surf);border-radius:10px;border:0.5px solid var(--bdr);padding:13px;}
+.rcard-t{font-size:12px;color:var(--muted);margin-bottom:3px;}.rcard-v{font-size:22px;font-weight:700;font-family:'Tajawal',sans-serif;}
+.chart-bar-wrap{background:var(--surf);border-radius:12px;border:0.5px solid var(--bdr);padding:15px;margin-bottom:14px;}
+.bar-row{display:flex;align-items:center;gap:9px;margin-bottom:9px;}
+.bar-lbl{font-size:12px;color:var(--muted);min-width:145px;text-align:right;}
+.bar-track{flex:1;height:11px;background:var(--surf2);border-radius:5px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:5px;transition:width 0.5s;}.bar-num{font-size:12px;font-weight:600;color:var(--txt);min-width:28px;}
+.hist-item{display:flex;align-items:center;gap:9px;padding:9px 13px;border-bottom:0.5px solid var(--bdr);}
+.hist-item:last-child{border-bottom:none;}
+.hist-ico{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.hist-ico.disp{background:var(--red-light);}.hist-ico.disp i{color:var(--red);}
+.hist-ico.res{background:var(--amber-light);}.hist-ico.res i{color:var(--amber);}
+.hist-ico.add{background:var(--green-light);}.hist-ico.add i{color:var(--green);}
+.hist-ico.supply{background:var(--blue-light);}.hist-ico.supply i{color:var(--blue);}
+.hist-info{flex:1;}.hist-txt{font-size:12px;color:var(--txt);}.hist-date{font-size:11px;color:var(--muted);}
+.hist-qty{font-size:13px;font-weight:700;}
+.hist-qty.disp{color:var(--red);}.hist-qty.res{color:var(--amber);}.hist-qty.add{color:var(--green);}.hist-qty.supply{color:var(--blue);}
+#toast{position:fixed;top:18px;left:50%;transform:translateX(-50%);background:#0F6E56;color:#fff;padding:10px 20px;border-radius:9px;font-size:13px;font-weight:500;opacity:0;transition:opacity 0.3s;z-index:9999;pointer-events:none;white-space:nowrap;}
+#toast.show{opacity:1;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-bottom:14px;}
+@media(max-width:680px){.two-col{grid-template-columns:1fr;}.fgrid4{grid-template-columns:1fr 1fr;}.fgrid{grid-template-columns:1fr;}}
+.info-box{background:var(--surf2);border-radius:8px;padding:9px;margin-bottom:9px;font-size:12px;color:var(--muted);display:none;}
+.empty{text-align:center;color:var(--muted);padding:28px;font-size:13px;}
+@media print{.hdr,.nav,.btn,.pact,.row-actions{display:none!important;}.pg{display:block!important;}}
+
+/* ADMIN PANEL */
+.admin-section{background:linear-gradient(135deg,rgba(4,44,83,0.05),rgba(15,110,86,0.05));border:1px solid rgba(4,44,83,0.15);border-radius:12px;padding:16px;margin-bottom:14px;}
+.admin-section .fst{color:#042C53;border-bottom-color:rgba(4,44,83,0.2);}
+.doc-group-header{display:flex;align-items:center;justify-content:space-between;background:var(--blue-light);border:0.5px solid #B5D4F4;border-radius:10px;padding:10px 14px;margin-bottom:10px;cursor:pointer;}
+.doc-group-title{font-size:13.5px;font-weight:600;color:var(--blue);display:flex;align-items:center;gap:8px;}
+.doc-group-count{background:#185FA5;color:#fff;font-size:11px;padding:2px 8px;border-radius:10px;}
+</style>
+</head>
+<body>
+<div id="toast"></div>
+
+<div id="loginOverlay"></div>
+
+<div id="mainApp" style="display:none;">
+<div class="hdr">
+  <div class="hdr-inner">
+    <div class="logo">
+      <svg width="30" height="30" viewBox="0 0 60 60" fill="none">
+        <circle cx="30" cy="30" r="24" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"/>
+        <path d="M18 23c0-3 2.2-5 5-5s5 2 5 5v3c0 1.5 1 3 2.5 3.5s2.5 2.5 2.5 4v3c0 2.5-2 4-4.5 4s-4.5-1.5-4.5-4v-1.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="42" cy="19" r="6" fill="#1D9E75"/>
+        <line x1="42" y1="15.5" x2="42" y2="22.5" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+        <line x1="38.5" y1="19" x2="45.5" y2="19" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="hdr-text">
+      <h1>نظام مخزن الأدوية البيولوجية</h1>
+      <p>قسم أمراض الجهاز الهضمي والكبد — GI Biologics System</p>
+    </div>
+    <div class="hdr-right">
+      <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn" title="تغيير الوضع"><i class="ti ti-moon" id="themeIcon"></i><span id="themeLabel">ليلي</span></button>
+      <button class="icon-btn" onclick="switchTab('alerts')" title="التنبيهات"><i class="ti ti-bell"></i><div class="notif-dot" id="notifDot"></div></button>
+      <div class="doc-badge" id="docBadge"><i class="ti ti-stethoscope"></i><span id="docBadgeText">—</span></div>
+      <button class="icon-btn" onclick="logout()" title="تسجيل الخروج"><i class="ti ti-logout"></i></button>
+    </div>
+  </div>
+</div>
+
+<div class="nav" id="mainNav">
+  <button class="back-btn" onclick="goBack()" id="backBtn" title="رجوع"><i class="ti ti-arrow-right"></i>رجوع</button>
+  <button class="tb on" onclick="switchTab('dash',this)"><i class="ti ti-layout-dashboard"></i>لوحة التحكم</button>
+  <button class="tb" onclick="switchTab('inv',this)"><i class="ti ti-pill"></i>المخزون</button>
+  <button class="tb" onclick="switchTab('disp',this)"><i class="ti ti-arrow-bar-right"></i>الصرف والحجز</button>
+  <button class="tb" onclick="switchTab('patients',this)"><i class="ti ti-users"></i>المرضى</button>
+  <button class="tb" onclick="switchTab('supply',this)"><i class="ti ti-truck-delivery"></i>الرفد</button>
+  <button class="tb" onclick="switchTab('history',this)"><i class="ti ti-history"></i>السجل</button>
+  <button class="tb" onclick="switchTab('report',this)"><i class="ti ti-chart-bar"></i>التقارير</button>
+  <button class="tb" onclick="switchTab('alerts',this)"><i class="ti ti-bell"></i>التنبيهات</button>
+  <button class="tb" onclick="switchTab('settings',this)"><i class="ti ti-settings"></i>الإعدادات</button>
+  <button class="tb admin-only" onclick="switchTab('admin',this)" style="display:none;"><i class="ti ti-shield-check"></i>لوحة المدير</button>
+</div>
+
+<!-- DASHBOARD -->
+<div class="pg on" id="pg-dash">
+  <div id="docBanner"></div>
+  <div class="sg" id="dashStats"></div>
+  <div class="alert-list" id="dashAlerts"></div>
+  <div class="sh"><div class="stl"><i class="ti ti-pill"></i>ملخص المخزون</div></div>
+  <div class="tw"><table class="dt"><thead><tr><th>الدواء</th><th>التصنيف</th><th>المصروف</th><th>المحجوز</th><th>المتبقي</th><th>النفاذ</th><th>الحالة</th><th>نسبة</th></tr></thead><tbody id="dashTable"></tbody></table></div>
+</div>
+
+<!-- INVENTORY -->
+<div class="pg" id="pg-inv">
+  <button class="pg-back" onclick="switchTab('dash')"><i class="ti ti-home"></i>الرئيسية</button>
+  <div class="sh">
+    <div class="stl"><i class="ti ti-pill"></i>سجل الأدوية البيولوجية</div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+      <div class="sw"><i class="ti ti-search"></i><input class="si" type="text" placeholder="بحث..." id="invSearch" oninput="renderInv()"></div>
+      <select class="si" style="min-width:130px;" id="invCatFilter" onchange="renderInv()"><option value="">كل التصنيفات</option></select>
+      <button class="btn btn-p" onclick="switchTab('settings')"><i class="ti ti-plus"></i>إضافة دواء</button>
+    </div>
+  </div>
+  <div class="tw"><table class="dt"><thead><tr><th>الدواء</th><th>الاسم التجاري</th><th>التصنيف</th><th>الكلي</th><th>المصروف</th><th>المحجوز</th><th>المتبقي</th><th>النفاذ</th><th>الحالة</th><th>إجراء</th></tr></thead><tbody id="invTable"></tbody></table></div>
+</div>
+
+<!-- DISPENSE -->
+<div class="pg" id="pg-disp">
+  <button class="pg-back" onclick="switchTab('dash')"><i class="ti ti-home"></i>الرئيسية</button>
+  <div class="two-col">
+    <div class="fs">
+      <div class="fst"><i class="ti ti-arrow-bar-right"></i>صرف دواء للمريض</div>
+      <div class="fgrid" style="margin-bottom:9px;">
+        <div class="fg"><label>اختر المريض</label><select id="dispPatient"></select></div>
+        <div class="fg"><label>اختر الدواء</label><select id="dispDrug" onchange="updateDispInfo()"></select></div>
+        <div class="fg"><label>الكمية</label><input type="number" id="dispQty" min="1" value="1"></div>
+        <div class="fg"><label>ملاحظة</label><input type="text" id="dispNote" placeholder="اختياري"></div>
+      </div>
+      <div class="info-box" id="dispInfo"></div>
+      <button class="btn btn-p" onclick="doDispense()"><i class="ti ti-check"></i>تأكيد الصرف</button>
+    </div>
+    <div class="fs">
+      <div class="fst"><i class="ti ti-lock"></i>حجز دواء للمريض</div>
+      <div class="fgrid" style="margin-bottom:9px;">
+        <div class="fg"><label>اختر المريض</label><select id="resPatient"></select></div>
+        <div class="fg"><label>اختر الدواء</label><select id="resDrug" onchange="updateResInfo()"></select></div>
+        <div class="fg"><label>الكمية</label><input type="number" id="resQty" min="1" value="1"></div>
+        <div class="fg"><label>تاريخ التسليم</label><input type="date" id="resDelivery"></div>
+      </div>
+      <div class="info-box" id="resInfo"></div>
+      <button class="btn btn-w" onclick="doReserve()"><i class="ti ti-lock"></i>تأكيد الحجز</button>
+    </div>
+  </div>
+  <div class="sh"><div class="stl"><i class="ti ti-list"></i>الحجوزات الحالية</div></div>
+  <div class="tw"><table class="dt"><thead><tr><th>المريض</th><th>الطبيب</th><th>الدواء</th><th>الكمية</th><th>تاريخ التسليم</th><th>إجراء</th></tr></thead><tbody id="resTable"></tbody></table></div>
+</div>
+
+<!-- PATIENTS -->
+<div class="pg" id="pg-patients">
+  <button class="pg-back" onclick="switchTab('dash')"><i class="ti ti-home"></i>الرئيسية</button>
+  <div class="sh">
+    <div class="stl"><i class="ti ti-users"></i>مرضاي</div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <div class="sw"><i class="ti ti-search"></i><input class="si" type="text" placeholder="بحث..." id="patSearch" oninput="renderPatients()"></div>
+      <select class="si" id="patDiagFilter" onchange="renderPatients()"><option value="">كل التشخيصات</option></select>
+      <button class="btn btn-p" onclick="switchTab('settings')"><i class="ti ti-user-plus"></i>إضافة مريض</button>
+    </div>
+  </div>
+  <div class="pgrid" id="pGrid"></div>
+</div>
+
+<!-- SUPPLY -->
+<div class="pg" id="pg-supply">
+  <button class="pg-back" onclick="switchTab('dash')"><i class="ti ti-home"></i>الرئيسية</button>
+  <div class="sh">
+    <div class="stl"><i class="ti ti-truck-delivery"></i>سجل الرفد</div>
+    <button class="btn btn-p" onclick="switchTab('settings')"><i class="ti ti-plus"></i>تسجيل رفد</button>
+  </div>
+  <div class="slist" id="supplyList"></div>
+</div>
+
+<!-- HISTORY -->
+<div class="pg" id="pg-history">
+  <button class="pg-back" onclick="switchTab('dash')"><i class="ti ti-home"></i>الرئيسية</button>
+  <div class="sh">
+    <div class="stl"><i class="ti ti-history"></i>سجل العمليات</div>
+    <div style="display:flex;gap:8px;">
+      <select class="si" id="histFilter" onchange="renderHistory()">
+        <option value="">كل العمليات</option><option value="disp">صرف</option>
+        <option value="res">حجز</option><option value="add">إضافة</option><option value="supply">رفد</option>
+      </select>
+      <button class="btn btn-s" onclick="clearHistory()"><i class="ti ti-trash"></i>مسح</button>
+    </div>
+  </div>
+  <div class="tw" style="padding:0;"><div id="histList"></div></div>
+</div>
+
+<!-- REPORTS -->
+<div class="pg" id="pg-report">
+  <button class="pg-back" onclick="switchTab('dash')"><i class="ti ti-home"></i>الرئيسية</button>
+  <div class="sh"><div class="stl"><i class="ti ti-chart-bar"></i>التقارير</div>
+    <button class="btn btn-s" onclick="window.print()"><i class="ti ti-printer"></i>طباعة</button>
+  </div>
+  <div class="report-grid" id="reportCards"></div>
+  <div class="sh"><div class="stl"><i class="ti ti-chart-bar"></i>استهلاك الأدوية</div></div>
+  <div class="chart-bar-wrap" id="barChart"></div>
+  <div class="sh"><div class="stl"><i class="ti ti-users"></i>توزيع التشخيصات</div></div>
+  <div class="chart-bar-wrap" id="diagChart"></div>
+</div>
+
+<!-- ALERTS -->
+<div class="pg" id="pg-alerts">
+  <button class="pg-back" onclick="switchTab('dash')"><i class="ti ti-home"></i>الرئيسية</button>
+  <div class="sh"><div class="stl"><i class="ti ti-bell"></i>التنبيهات</div></div>
+  <div id="alertsFull"></div>
+</div>
+
+<!-- SETTINGS -->
+<div class="pg" id="pg-settings">
+  <button class="pg-back" onclick="switchTab('dash')"><i class="ti ti-home"></i>الرئيسية</button>
+  <div class="fs">
+    <div class="fst"><i class="ti ti-user-circle"></i>بيانات الطبيب المسؤول</div>
+    <div class="fgrid4">
+      <div class="fg"><label>اسم الطبيب</label><input type="text" id="setDocName" placeholder="د. الاسم الكامل"></div>
+      <div class="fg"><label>التخصص</label><input type="text" id="setDocSpec" placeholder="أمراض الجهاز الهضمي"></div>
+      <div class="fg"><label>رقم الشهادة</label><input type="text" id="setDocLic" placeholder="رقم الترخيص"></div>
+      <div class="fg"><label>القسم / المستشفى</label><input type="text" id="setDocDept" placeholder="اسم القسم"></div>
+    </div>
+    <div style="margin-top:11px;"><button class="btn btn-p" onclick="saveDoc()"><i class="ti ti-check"></i>حفظ</button></div>
+  </div>
+  <div class="fs" id="settingsDrugForm">
+    <div class="fst"><i class="ti ti-pill"></i>إضافة دواء للمخزون</div>
+    <div class="fgrid4">
+      <div class="fg"><label>اسم الدواء</label><input type="text" id="nDN" placeholder="إنفليكسيماب"></div>
+      <div class="fg"><label>الاسم التجاري</label><input type="text" id="nDB" placeholder="Remicade"></div>
+      <div class="fg"><label>التصنيف</label>
+        <select id="nDC"><option>مضاد TNF-α</option><option>مضاد IL-12/23</option><option>مضاد IL-23</option><option>مضاد انتغرين</option><option>مضاد JAK</option><option>مضاد IL-6</option><option>أخرى</option></select>
+      </div>
+      <div class="fg"><label>الكمية الكلية</label><input type="number" id="nDT" placeholder="50" min="0"></div>
+      <div class="fg"><label>المصروف</label><input type="number" id="nDD" value="0" min="0"></div>
+      <div class="fg"><label>المحجوز</label><input type="number" id="nDR" value="0" min="0"></div>
+      <div class="fg"><label>تاريخ النفاذ</label><input type="date" id="nDE"></div>
+      <div class="fg"><label>حد التنبيه</label><input type="number" id="nDMin" value="10" min="1"></div>
+    </div>
+    <div style="margin-top:11px;"><button class="btn btn-p" onclick="addDrug()"><i class="ti ti-plus"></i>إضافة للمخزون</button></div>
+  </div>
+  <div class="fs" id="settingsPatForm">
+    <div class="fst"><i class="ti ti-user-plus"></i>إضافة مريض جديد</div>
+    <div class="fgrid4">
+      <div class="fg"><label>اسم المريض</label><input type="text" id="nPN" placeholder="الاسم الكامل"></div>
+      <div class="fg"><label>العمر</label><input type="number" id="nPA" placeholder="35" min="1"></div>
+      <div class="fg"><label>الجنس</label><select id="nPG"><option>ذكر</option><option>أنثى</option></select></div>
+      <div class="fg"><label>رقم الملف MRN</label><input type="text" id="nPID" placeholder="MRN-0001"></div>
+      <div class="fg"><label>التشخيص</label>
+        <select id="nPD"><option>مرض كرون</option><option>التهاب القولون التقرحي</option><option>التهاب الكبد المناعي الذاتي</option><option>متلازمة القولون العصبي</option><option>أخرى</option></select>
+      </div>
+      <div class="fg"><label>الدواء البيولوجي</label><input type="text" id="nPDrug" placeholder="اسم الدواء"></div>
+      <div class="fg"><label>تاريخ بدء العلاج</label><input type="date" id="nPS"></div>
+      <div class="fg"><label>الجرعة والبروتوكول</label><input type="text" id="nPDose" placeholder="5 mg/kg كل 8 أسابيع"></div>
+      <div class="fg ffull"><label>ملاحظات طبية</label><textarea id="nPNotes" rows="2" placeholder="الحساسية، الأمراض المزمنة..."></textarea></div>
+    </div>
+    <div style="margin-top:11px;"><button class="btn btn-p" onclick="addPatient()"><i class="ti ti-check"></i>إضافة المريض</button></div>
+  </div>
+  <div class="fs" id="settingsSupplyForm">
+    <div class="fst"><i class="ti ti-truck-delivery"></i>تسجيل رفد جديد</div>
+    <div class="fgrid4">
+      <div class="fg"><label>اسم الدواء</label><input type="text" id="nSN" placeholder="اسم الدواء"></div>
+      <div class="fg"><label>المورد</label><input type="text" id="nSSup" placeholder="اسم الشركة"></div>
+      <div class="fg"><label>الكمية</label><input type="number" id="nSQ" placeholder="20" min="1"></div>
+      <div class="fg"><label>تاريخ الرفد</label><input type="date" id="nSR"></div>
+      <div class="fg"><label>قبل النفاذ (تنبيه)</label><input type="date" id="nSP"></div>
+      <div class="fg"><label>تاريخ النفاذ</label><input type="date" id="nSE"></div>
+      <div class="fg"><label>رقم الدفعة</label><input type="text" id="nSBatch" placeholder="Batch No."></div>
+      <div class="fg"><label>ملاحظات</label><input type="text" id="nSNote" placeholder="اختياري"></div>
+    </div>
+    <div style="margin-top:11px;"><button class="btn btn-p" onclick="addSupply()"><i class="ti ti-check"></i>تسجيل الرفد</button></div>
+  </div>
+</div>
+
+<!-- ADMIN PANEL -->
+<div class="pg" id="pg-admin">
+  <button class="pg-back" onclick="switchTab('dash')"><i class="ti ti-home"></i>الرئيسية</button>
+  <div style="background:linear-gradient(135deg,#042C53,#0F6E56);border-radius:12px;padding:16px 20px;margin-bottom:16px;display:flex;align-items:center;gap:14px;">
+    <i class="ti ti-shield-check" style="font-size:28px;color:#fff;"></i>
+    <div>
+      <div style="font-family:'Tajawal',sans-serif;font-size:18px;font-weight:800;color:#fff;">لوحة الطبيب المدير</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.7);">عرض كامل لجميع المرضى والبيانات — صلاحية موسعة</div>
+    </div>
+  </div>
+
+  <!-- Doctor management -->
+  <div class="admin-section">
+    <div class="fst"><i class="ti ti-users"></i>إدارة الأطباء والحسابات</div>
+    <div id="doctorListAdmin"></div>
+    <div style="margin-top:12px;border-top:0.5px solid var(--bdr);padding-top:12px;">
+      <div style="font-size:13px;font-weight:600;color:var(--txt);margin-bottom:10px;"><i class="ti ti-user-plus" style="color:var(--teal);margin-left:5px;"></i>إضافة طبيب جديد</div>
+      <div class="fgrid4">
+        <div class="fg"><label>اسم الطبيب</label><input type="text" id="admDocName" placeholder="د. الاسم الكامل"></div>
+        <div class="fg"><label>اسم المستخدم</label><input type="text" id="admDocUser" placeholder="username"></div>
+        <div class="fg"><label>كلمة المرور</label><input type="text" id="admDocPass" placeholder="password"></div>
+        <div class="fg"><label>التخصص</label><input type="text" id="admDocSpec" placeholder="أمراض الجهاز الهضمي"></div>
+        <div class="fg"><label>الدور</label>
+          <select id="admDocRole">
+            <option value="doctor">طبيب</option>
+            <option value="pharmacist">صيدلاني</option>
+            <option value="staff">عامل مخزن</option>
+          </select>
+        </div>
+        <div class="fg"><label>القسم / المستشفى</label><input type="text" id="admDocDept" placeholder="اسم المستشفى"></div>
+      </div>
+      <div style="margin-top:10px;"><button class="btn btn-p" onclick="adminAddDoctor()"><i class="ti ti-plus"></i>إضافة حساب</button></div>
+    </div>
+  </div>
+
+  <!-- All patients -->
+  <div class="admin-section">
+    <div class="fst"><i class="ti ti-users"></i>جميع المرضى — عرض موسع</div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+      <div class="sw"><i class="ti ti-search"></i><input class="si" type="text" placeholder="بحث عن مريض..." id="adminPatSearch" oninput="renderAdminPatients()"></div>
+      <select class="si" id="adminDocFilter" onchange="renderAdminPatients()"><option value="">كل الأطباء</option></select>
+      <select class="si" id="adminDiagFilter" onchange="renderAdminPatients()"><option value="">كل التشخيصات</option></select>
+    </div>
+    <div id="adminPatientsCount" style="font-size:12px;color:var(--muted);margin-bottom:10px;"></div>
+    <div class="pgrid" id="adminPGrid"></div>
+  </div>
+
+  <!-- Stats per doctor -->
+  <div class="admin-section">
+    <div class="fst"><i class="ti ti-chart-bar"></i>إحصائيات حسب الطبيب</div>
+    <div id="adminDocStats"></div>
+  </div>
+</div>
+
+</div><!-- end mainApp -->
+
+<script>
+/* ===== DATA ===== */
+let drugs=[
+  {id:1,name:"إنفليكسيماب",brand:"Remicade",cat:"مضاد TNF-α",total:60,dispensed:22,reserved:8,expiry:"2026-09-15",minAlert:10},
+  {id:2,name:"أداليموماب",brand:"Humira",cat:"مضاد TNF-α",total:80,dispensed:35,reserved:12,expiry:"2026-07-20",minAlert:10},
+  {id:3,name:"فيدوليزوماب",brand:"Entyvio",cat:"مضاد انتغرين",total:40,dispensed:18,reserved:6,expiry:"2027-02-10",minAlert:8},
+  {id:4,name:"أوستيكينوماب",brand:"Stelara",cat:"مضاد IL-12/23",total:30,dispensed:10,reserved:5,expiry:"2026-11-30",minAlert:5},
+  {id:5,name:"ريساكيزوماب",brand:"Skyrizi",cat:"مضاد IL-23",total:20,dispensed:8,reserved:4,expiry:"2026-06-05",minAlert:5},
+  {id:6,name:"توفاسيتينيب",brand:"Xeljanz",cat:"مضاد JAK",total:90,dispensed:42,reserved:10,expiry:"2027-04-18",minAlert:15},
+  {id:7,name:"سيرتوليزوماب",brand:"Cimzia",cat:"مضاد TNF-α",total:25,dispensed:14,reserved:3,expiry:"2026-08-22",minAlert:5}
+];
+let patients=[];
+let supplies=[
+  {id:1,drug:"إنفليكسيماب",supplier:"شركة جانسن",qty:20,refill:"2025-12-01",preExpiry:"2026-08-15",expiry:"2026-09-15",batch:"JNS-2025-1201",note:""},
+  {id:2,drug:"أداليموماب",supplier:"شركة أبفي",qty:30,refill:"2026-01-10",preExpiry:"2026-06-20",expiry:"2026-07-20",batch:"ABI-2026-0110",note:""},
+  {id:3,drug:"فيدوليزوماب",supplier:"شركة تاكيدا",qty:15,refill:"2026-02-15",preExpiry:"2027-01-10",expiry:"2027-02-10",batch:"TKD-2026-0215",note:""}
+];
+let reservations=[];
+let history=[];
+let docInfo={name:"",spec:"",lic:"",dept:""};
+
+/* ===== USER SYSTEM ===== */
+let USERS=[
+  {id:'admin', name:'المدير', role:'admin', roleLabel:'طبيب مدير',
+   username:'admin', password:'admin123', color:'#042C53', spec:'', dept:''},
+  {id:'doc1', name:'طبيب 1', role:'doctor', roleLabel:'طبيب',
+   username:'doctor1', password:'doc123', color:'#185FA5', spec:'', dept:''},
+  {id:'doc2', name:'طبيب 2', role:'doctor', roleLabel:'طبيب',
+   username:'doctor2', password:'doc456', color:'#0F6E56', spec:'', dept:''},
+  {id:'doc3', name:'طبيب 3', role:'doctor', roleLabel:'طبيب',
+   username:'doctor3', password:'doc789', color:'#534AB7', spec:'', dept:''},
+  {id:'pharm1', name:'الصيدلاني', role:'pharmacist', roleLabel:'صيدلاني',
+   username:'pharmacist', password:'ph123', color:'#BA7517', spec:'', dept:''},
+  {id:'staff1', name:'عامل المخزن', role:'staff', roleLabel:'عامل مخزن',
+   username:'staff', password:'st123', color:'#5F5E5A', spec:'', dept:''}
+];
+
+const PERMS={
+  admin:  {dash:true,inv:true,disp:true,patients:true,supply:true,history:true,report:true,alerts:true,settings:true,admin:true},
+  doctor: {dash:true,inv:true,disp:true,patients:true,supply:false,history:true,report:true,alerts:true,settings:true,admin:false},
+  pharmacist:{dash:true,inv:true,disp:true,patients:false,supply:true,history:true,report:true,alerts:true,settings:false,admin:false},
+  staff:  {dash:true,inv:true,disp:false,patients:false,supply:true,history:true,report:false,alerts:true,settings:false,admin:false}
+};
+
+let currentUser=null;
+
+/* ===== HELPERS ===== */
+function rem(d){return Math.max(0,d.total-d.dispensed-d.reserved);}
+function status(d){
+  const r=rem(d),p=d.total>0?Math.round((r/d.total)*100):0;
+  if(r<=0)return{l:"نافد",c:"bdg-r",fc:"pf-r",p:0};
+  if(r<=d.minAlert)return{l:"حرج",c:"bdg-r",fc:"pf-r",p};
+  if(p<=30)return{l:"منخفض",c:"bdg-w",fc:"pf-w",p};
+  return{l:"متاح",c:"bdg-ok",fc:"pf-ok",p};
+}
+function daysLeft(exp){return Math.round((new Date(exp)-new Date())/86400000);}
+function today(){return new Date().toLocaleDateString('ar-IQ');}
+function showToast(msg,err){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.style.background=err?'#A32D2D':'#0F6E56';
+  t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+/* Returns patients visible to current user */
+function visiblePatients(){
+  if(!currentUser)return[];
+  if(currentUser.role==='admin'||currentUser.role==='pharmacist')return patients;
+  if(currentUser.role==='doctor')return patients.filter(p=>p.docId===currentUser.id);
+  return[];
+}
+
+function doctorName(docId){
+  const u=USERS.find(x=>x.id===docId);
+  return u?u.name:'—';
+}
+
+/* ===== TABS ===== */
+function switchTab(tab,el){
+  document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.tb').forEach(b=>b.classList.remove('on'));
+  const pg=document.getElementById('pg-'+tab);
+  if(pg)pg.classList.add('on');
+  if(el){el.classList.add('on');}
+  else{document.querySelectorAll('.tb').forEach(b=>{if((b.getAttribute('onclick')||'').includes("'"+tab+"'"))b.classList.add('on');});}
+  if(!tabHistory||tabHistory[tabHistory.length-1]!==tab){
+    if(!tabHistory)tabHistory=['dash'];
+    tabHistory.push(tab);
+    if(tabHistory.length>20)tabHistory.shift();
+  }
+  renderAll();
+}
+
+/* ===== ALERTS ===== */
+function getAlerts(){
+  const al=[];
+  drugs.forEach(d=>{
+    const r=rem(d),days=daysLeft(d.expiry);
+    if(r<=0)al.push({type:'danger',msg:`<strong>${d.name}</strong> — نفدت الكمية`});
+    else if(r<=d.minAlert)al.push({type:'danger',msg:`<strong>${d.name}</strong> — مخزون حرج: ${r} جرعة`});
+    if(days<0)al.push({type:'danger',msg:`<strong>${d.name}</strong> — انتهت الصلاحية: ${d.expiry}`});
+    else if(days<90)al.push({type:'warn',msg:`<strong>${d.name}</strong> — ينتهي خلال ${days} يوم`});
+  });
+  return al;
+}
+
+/* ===== RENDER DASH ===== */
+function renderDash(){
+  const al=getAlerts();
+  document.getElementById('notifDot').style.display=al.length?'block':'none';
+  const vp=visiblePatients();
+  const totalRes=drugs.reduce((s,d)=>s+d.reserved,0);
+  const low=drugs.filter(d=>status(d).l!=='متاح').length;
+  document.getElementById('dashStats').innerHTML=`
+    <div class="sc t"><div class="sc-ico-wrap teal"><i class="ti ti-pill"></i></div><div class="sc-val">${drugs.length}</div><div class="sc-lbl">أدوية بيولوجية</div></div>
+    <div class="sc b"><div class="sc-ico-wrap blue"><i class="ti ti-users"></i></div><div class="sc-val">${vp.length}</div><div class="sc-lbl">${currentUser&&currentUser.role==='doctor'?'مرضاي':currentUser&&currentUser.role==='admin'?'إجمالي المرضى':'مرضى مسجلون'}</div></div>
+    <div class="sc a"><div class="sc-ico-wrap amber"><i class="ti ti-lock"></i></div><div class="sc-val">${totalRes}</div><div class="sc-lbl">جرعة محجوزة</div></div>
+    <div class="sc r"><div class="sc-ico-wrap red"><i class="ti ti-alert-triangle"></i></div><div class="sc-val">${low}</div><div class="sc-lbl">مخزون منخفض</div></div>
+    <div class="sc p"><div class="sc-ico-wrap purple"><i class="ti ti-truck-delivery"></i></div><div class="sc-val">${supplies.length}</div><div class="sc-lbl">عملية رفد</div></div>
+  `;
+  document.getElementById('dashAlerts').innerHTML=al.slice(0,4).map(a=>`<div class="alert-item ${a.type}"><i class="ti ti-${a.type==='danger'?'alert-circle':'alert-triangle'}"></i><span class="alert-txt">${a.msg}</span></div>`).join('');
+  document.getElementById('dashTable').innerHTML=drugs.map(d=>{
+    const r=rem(d),st=status(d),days=daysLeft(d.expiry);
+    const expC=days<0?'bdg-r':days<90?'bdg-w':'bdg-ok';
+    return`<tr><td><div class="dn">${d.name}</div><div class="dc">${d.brand}</div></td><td><span class="bdg bdg-b">${d.cat}</span></td><td style="text-align:center">${d.dispensed}</td><td style="text-align:center"><span class="bdg bdg-p">${d.reserved}</span></td><td style="text-align:center;font-weight:700;color:${r<=d.minAlert?'var(--red)':'var(--teal)'}">${r}</td><td><span class="bdg ${expC}">${d.expiry}</span></td><td><span class="bdg ${st.c}">${st.l}</span></td><td><div class="pb"><div class="pf ${st.fc}" style="width:${st.p}%"></div></div></td></tr>`;
+  }).join('');
+  const b=document.getElementById('docBanner');
+  if(currentUser&&currentUser.role==='admin'){
+    b.innerHTML=`<div style="background:linear-gradient(135deg,rgba(4,44,83,0.08),rgba(15,110,86,0.08));border:0.5px solid rgba(4,44,83,0.2);border-radius:10px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px;"><i class="ti ti-shield-check" style="color:#042C53;font-size:18px;"></i><div><div style="font-size:14px;font-weight:600;color:#042C53;">${currentUser.name} — صلاحية مدير</div><div style="font-size:11.5px;color:var(--muted);">عرض كامل لجميع بيانات النظام</div></div><button class="btn btn-p btn-sm" style="margin-right:auto;" onclick="switchTab('admin')"><i class="ti ti-shield-check"></i>لوحة المدير</button></div>`;
+  } else b.innerHTML='';
+}
+
+/* ===== RENDER INVENTORY ===== */
+function renderInv(){
+  const q=(document.getElementById('invSearch')||{}).value||'';
+  const cf=(document.getElementById('invCatFilter')||{}).value||'';
+  const cats=[...new Set(drugs.map(d=>d.cat))];
+  const sel=document.getElementById('invCatFilter');
+  if(sel){const cv=sel.value;sel.innerHTML='<option value="">كل التصنيفات</option>'+cats.map(c=>`<option value="${c}"${c===cv?' selected':''}>${c}</option>`).join('');sel.value=cv;}
+  const list=drugs.filter(d=>(d.name.includes(q)||d.brand.includes(q)||d.cat.includes(q))&&(!cf||d.cat===cf));
+  const canDel=currentUser&&(currentUser.role==='admin');
+  document.getElementById('invTable').innerHTML=list.length?list.map(d=>{
+    const r=rem(d),st=status(d),days=daysLeft(d.expiry);
+    const expC=days<0?'bdg-r':days<90?'bdg-w':'bdg-ok';
+    return`<tr><td><div class="dn">${d.name}</div></td><td>${d.brand}</td><td><span class="bdg bdg-b">${d.cat}</span></td><td style="text-align:center">${d.total}</td><td style="text-align:center">${d.dispensed}</td><td style="text-align:center"><span class="bdg bdg-p">${d.reserved}</span></td><td style="text-align:center;font-weight:700;color:${r<=d.minAlert?'var(--red)':'var(--teal)'}">${r}</td><td><span class="bdg ${expC}">${d.expiry}</span></td><td><span class="bdg ${st.c}">${st.l}</span></td><td>${canDel?`<button class="btn btn-d btn-sm" onclick="deleteDrug(${d.id})"><i class="ti ti-trash"></i></button>`:'—'}</td></tr>`;
+  }).join(''):`<tr><td colspan="10" class="empty">لا توجد أدوية</td></tr>`;
+}
+
+/* ===== RENDER DISPENSE ===== */
+function renderDisp(){
+  const vp=visiblePatients();
+  const populate=(sid,did)=>{
+    const ps=document.getElementById(sid),pd=document.getElementById(did);
+    if(!ps||!pd)return;
+    const pv=ps.value,dv=pd.value;
+    ps.innerHTML='<option value="">-- اختر مريضاً --</option>'+vp.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+    pd.innerHTML='<option value="">-- اختر دواء --</option>'+drugs.filter(d=>rem(d)>0).map(d=>`<option value="${d.id}">${d.name} (${rem(d)} متبقي)</option>`).join('');
+    ps.value=pv;pd.value=dv;
+  };
+  populate('dispPatient','dispDrug');populate('resPatient','resDrug');
+  document.getElementById('resTable').innerHTML=reservations.length?reservations.map(r=>{
+    const p=patients.find(x=>x.id===r.patId),d=drugs.find(x=>x.id===r.drugId);
+    return`<tr><td>${p?p.name:'—'}</td><td>${p?doctorName(p.docId):'—'}</td><td>${d?d.name:'—'}</td><td style="text-align:center"><span class="bdg bdg-p">${r.qty}</span></td><td>${r.delivery||'—'}</td><td><button class="btn btn-d btn-sm" onclick="cancelReserv(${r.id})"><i class="ti ti-x"></i>إلغاء</button></td></tr>`;
+  }).join(''):`<tr><td colspan="6" class="empty">لا توجد حجوزات</td></tr>`;
+}
+
+function updateDispInfo(){
+  const id=parseInt(document.getElementById('dispDrug').value);
+  const d=drugs.find(x=>x.id===id),el=document.getElementById('dispInfo');
+  if(d){el.style.display='block';el.innerHTML=`متبقي: <strong style="color:var(--teal)">${rem(d)}</strong> · محجوز: <strong>${d.reserved}</strong> · النفاذ: <strong>${d.expiry}</strong>`;}
+  else el.style.display='none';
+}
+function updateResInfo(){
+  const id=parseInt(document.getElementById('resDrug').value);
+  const d=drugs.find(x=>x.id===id),el=document.getElementById('resInfo');
+  if(d){el.style.display='block';el.innerHTML=`متبقي: <strong style="color:var(--teal)">${rem(d)}</strong> · محجوز حالياً: <strong>${d.reserved}</strong>`;}
+  else el.style.display='none';
+}
+function doDispense(){
+  const pid=parseInt(document.getElementById('dispPatient').value),did=parseInt(document.getElementById('dispDrug').value),qty=parseInt(document.getElementById('dispQty').value)||0,note=document.getElementById('dispNote').value;
+  if(!pid||!did){showToast('اختر المريض والدواء',true);return;}
+  const d=drugs.find(x=>x.id===did),p=patients.find(x=>x.id===pid);
+  if(!d||rem(d)<qty){showToast(`الكمية المطلوبة أكبر من المتاح (${rem(d)})`,true);return;}
+  d.dispensed+=qty;
+  history.unshift({id:Date.now(),type:'disp',drug:d.name,patient:p.name,qty,note,date:today()});
+  document.getElementById('dispQty').value=1;document.getElementById('dispNote').value='';
+  showToast(`✓ صرف ${qty} جرعة من ${d.name} لـ ${p.name}`);renderAll();
+}
+function doReserve(){
+  const pid=parseInt(document.getElementById('resPatient').value),did=parseInt(document.getElementById('resDrug').value),qty=parseInt(document.getElementById('resQty').value)||0,delivery=document.getElementById('resDelivery').value;
+  if(!pid||!did){showToast('اختر المريض والدواء',true);return;}
+  const d=drugs.find(x=>x.id===did),p=patients.find(x=>x.id===pid);
+  if(!d||rem(d)<qty){showToast('الكمية المطلوبة أكبر من المتاح',true);return;}
+  d.reserved+=qty;reservations.push({id:Date.now(),patId:pid,drugId:did,qty,delivery});
+  history.unshift({id:Date.now(),type:'res',drug:d.name,patient:p.name,qty,note:'حجز',date:today()});
+  document.getElementById('resQty').value=1;document.getElementById('resDelivery').value='';
+  showToast(`✓ حجز ${qty} جرعة من ${d.name} لـ ${p.name}`);renderAll();
+}
+function cancelReserv(id){
+  const r=reservations.find(x=>x.id===id);
+  if(r){const d=drugs.find(x=>x.id===r.drugId);if(d)d.reserved=Math.max(0,d.reserved-r.qty);}
+  reservations=reservations.filter(x=>x.id!==id);showToast('تم إلغاء الحجز');renderAll();
+}
+
+/* ===== RENDER PATIENTS (own only) ===== */
+function renderPatients(){
+  const q=(document.getElementById('patSearch')||{}).value||'';
+  const df=(document.getElementById('patDiagFilter')||{}).value||'';
+  let list=visiblePatients().filter(p=>(p.name.includes(q)||p.diag.includes(q)||p.drug.includes(q)||(p.mrn||'').includes(q))&&(!df||p.diag===df));
+  const diags=[...new Set(visiblePatients().map(p=>p.diag))];
+  const sel=document.getElementById('patDiagFilter');
+  if(sel){const cv=sel.value;sel.innerHTML='<option value="">كل التشخيصات</option>'+diags.map(d=>`<option value="${d}"${d===cv?' selected':''}>${d}</option>`).join('');sel.value=cv;}
+  const stl=document.querySelector('#pg-patients .stl');
+  if(stl){
+    const isAdmin=currentUser&&currentUser.role==='admin';
+    stl.innerHTML=`<i class="ti ti-users"></i>${isAdmin?'جميع المرضى':'مرضاي'} <span style="font-size:12px;color:var(--muted);font-weight:400;">(${list.length})</span>`;
+  }
+  document.getElementById('pGrid').innerHTML=list.length?list.map(p=>{
+    const ini=p.name.split(' ').slice(0,2).map(w=>w[0]).join('');
+    const daysOn=Math.round((new Date()-new Date(p.start))/86400000);
+    const doc=USERS.find(u=>u.id===p.docId);
+    const showDoc=currentUser&&(currentUser.role==='admin');
+    return`<div class="pcard${showDoc?' admin-view':''}">
+      ${showDoc?`<div class="doc-tag"><i class="ti ti-stethoscope" style="font-size:11px;"></i>${doc?doc.name:'—'}</div>`:''}
+      <div class="phdr"><div class="pav">${ini}</div>
+        <div><div class="pname">${p.name}</div><div class="pid">${p.mrn||''} · ${p.age}س · ${p.gender}</div></div>
+      </div>
+      <div class="pinfo">
+        <div class="pi-r"><div class="pi-l">التشخيص</div><div class="pi-v">${p.diag}</div></div>
+        <div class="pi-r"><div class="pi-l">بدء العلاج</div><div class="pi-v">${p.start}</div></div>
+        <div class="pi-r"><div class="pi-l">مدة العلاج</div><div class="pi-v">${daysOn} يوم</div></div>
+        <div class="pi-r"><div class="pi-l">الجرعة</div><div class="pi-v" style="font-size:11px">${p.dose||'—'}</div></div>
+        ${p.notes?`<div class="pi-r" style="grid-column:1/-1"><div class="pi-l">ملاحظات</div><div class="pi-v" style="font-size:11px">${p.notes}</div></div>`:''}
+      </div>
+      <div class="pdrug"><i class="ti ti-pill"></i><span>${p.drug}</span></div>
+      <div class="pact"><button class="btn btn-d btn-sm" onclick="deletePatient(${p.id})"><i class="ti ti-trash"></i></button></div>
+    </div>`;
+  }).join(''):`<div class="empty" style="grid-column:1/-1">لا يوجد مرضى</div>`;
+}
+
+/* ===== ADMIN PANEL ===== */
+function renderAdminPanel(){
+  /* doctor list */
+  const doctors=USERS.filter(u=>u.role==='doctor'||u.role==='admin');
+  document.getElementById('doctorListAdmin').innerHTML=doctors.map(u=>{
+    const myPats=patients.filter(p=>p.docId===u.id);
+    return`<div style="display:flex;align-items:center;gap:12px;padding:10px 13px;background:var(--surf);border-radius:9px;border:0.5px solid var(--bdr);margin-bottom:8px;">
+      <div style="width:38px;height:38px;border-radius:50%;background:${u.color};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px;flex-shrink:0;">${u.name.split(' ').slice(0,2).map(w=>w[0]).join('')}</div>
+      <div style="flex:1;">
+        <div style="font-size:13.5px;font-weight:600;color:var(--txt);">${u.name}</div>
+        <div style="font-size:11.5px;color:var(--muted);">${u.role==='admin'?'مدير النظام':u.roleLabel} · ${u.username} ${u.spec?'· '+u.spec:''}</div>
+      </div>
+      <span class="bdg bdg-b" style="margin-left:8px;">${myPats.length} مريض</span>
+      ${u.role!=='admin'?`<button class="btn btn-d btn-sm" onclick="adminDeleteDoctor('${u.id}')"><i class="ti ti-trash"></i></button>`:''}
+    </div>`;
+  }).join('');
+
+  /* admin patient filters */
+  const docSel=document.getElementById('adminDocFilter');
+  if(docSel){const cv=docSel.value;docSel.innerHTML='<option value="">كل الأطباء</option>'+USERS.filter(u=>u.role==='doctor'||u.role==='admin').map(u=>`<option value="${u.id}"${u.id===cv?' selected':''}>${u.name}</option>`).join('');docSel.value=cv;}
+  const diagSel=document.getElementById('adminDiagFilter');
+  if(diagSel){const cv=diagSel.value;diagSel.innerHTML='<option value="">كل التشخيصات</option>'+ [...new Set(patients.map(p=>p.diag))].map(d=>`<option value="${d}"${d===cv?' selected':''}>${d}</option>`).join('');diagSel.value=cv;}
+
+  renderAdminPatients();
+
+  /* stats per doc */
+  document.getElementById('adminDocStats').innerHTML=USERS.filter(u=>u.role==='doctor').map(u=>{
+    const myPats=patients.filter(p=>p.docId===u.id);
+    const diags={};myPats.forEach(p=>{diags[p.diag]=(diags[p.diag]||0)+1;});
+    return`<div style="background:var(--surf);border-radius:10px;border:0.5px solid var(--bdr);padding:13px 15px;margin-bottom:10px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+        <div style="width:34px;height:34px;border-radius:50%;background:${u.color};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:12px;">${u.name.split(' ').slice(0,2).map(w=>w[0]).join('')}</div>
+        <div style="font-size:13.5px;font-weight:600;color:var(--txt);">${u.name}</div>
+        <span class="bdg bdg-b" style="margin-right:auto;">${myPats.length} مريض</span>
+      </div>
+      ${myPats.length?`<div style="display:flex;flex-wrap:wrap;gap:6px;">${Object.entries(diags).map(([k,v])=>`<span class="bdg bdg-t">${k}: ${v}</span>`).join('')}</div>`:'<div style="font-size:12px;color:var(--muted);">لا يوجد مرضى مسجلون</div>'}
+    </div>`;
+  }).join('');
+}
+
+function renderAdminPatients(){
+  const q=(document.getElementById('adminPatSearch')||{}).value||'';
+  const df=(document.getElementById('adminDocFilter')||{}).value||'';
+  const dd=(document.getElementById('adminDiagFilter')||{}).value||'';
+  const list=patients.filter(p=>(p.name.includes(q)||p.mrn&&p.mrn.includes(q))&&(!df||p.docId===df)&&(!dd||p.diag===dd));
+  document.getElementById('adminPatientsCount').textContent=`عرض ${list.length} من ${patients.length} مريض`;
+  document.getElementById('adminPGrid').innerHTML=list.map(p=>{
+    const ini=p.name.split(' ').slice(0,2).map(w=>w[0]).join('');
+    const doc=USERS.find(u=>u.id===p.docId);
+    return`<div class="pcard admin-view">
+      <div class="doc-tag"><i class="ti ti-stethoscope" style="font-size:11px;"></i>${doc?doc.name:'—'}</div>
+      <div class="phdr"><div class="pav">${ini}</div>
+        <div><div class="pname">${p.name}</div><div class="pid">${p.mrn||''} · ${p.age}س · ${p.gender}</div></div>
+      </div>
+      <div class="pinfo">
+        <div class="pi-r"><div class="pi-l">التشخيص</div><div class="pi-v">${p.diag}</div></div>
+        <div class="pi-r"><div class="pi-l">بدء العلاج</div><div class="pi-v">${p.start}</div></div>
+        <div class="pi-r"><div class="pi-l">الدواء</div><div class="pi-v">${p.drug}</div></div>
+        <div class="pi-r"><div class="pi-l">الجرعة</div><div class="pi-v" style="font-size:11px">${p.dose||'—'}</div></div>
+      </div>
+      ${p.notes?`<div style="font-size:11px;color:var(--muted);margin-bottom:7px;">${p.notes}</div>`:''}
+      <div class="pact">
+        <button class="btn btn-w btn-sm" onclick="adminTransferPatient(${p.id})"><i class="ti ti-arrows-transfer-up"></i>نقل</button>
+        <button class="btn btn-d btn-sm" onclick="deletePatient(${p.id})"><i class="ti ti-trash"></i></button>
+      </div>
+    </div>`;
+  }).join('')||`<div class="empty" style="grid-column:1/-1">لا يوجد مرضى</div>`;
+}
+
+function adminAddDoctor(){
+  const name=document.getElementById('admDocName').value.trim();
+  const uname=document.getElementById('admDocUser').value.trim();
+  const pass=document.getElementById('admDocPass').value.trim();
+  const spec=document.getElementById('admDocSpec').value.trim();
+  const role=document.getElementById('admDocRole').value;
+  const dept=document.getElementById('admDocDept').value.trim();
+  if(!name||!uname||!pass){showToast('يرجى إدخال الاسم واسم المستخدم وكلمة المرور',true);return;}
+  if(USERS.find(u=>u.username===uname)){showToast('اسم المستخدم موجود مسبقاً',true);return;}
+  const colors=['#185FA5','#0F6E56','#534AB7','#BA7517','#A32D2D','#3B6D11'];
+  const newId='doc'+Date.now();
+  USERS.push({id:newId,name,role,roleLabel:role==='doctor'?'طبيب':role==='pharmacist'?'صيدلاني':'عامل مخزن',username:uname,password:pass,color:colors[USERS.length%colors.length],spec,dept});
+  ['admDocName','admDocUser','admDocPass','admDocSpec','admDocDept'].forEach(id=>document.getElementById(id).value='');
+  showToast(`✓ تم إضافة حساب ${name}`);renderAdminPanel();buildLoginScreen();
+}
+
+function adminDeleteDoctor(uid){
+  const u=USERS.find(x=>x.id===uid);
+  const myPats=patients.filter(p=>p.docId===uid);
+  if(myPats.length&&!confirm(`${u.name} لديه ${myPats.length} مريض. هل تريد حذف الحساب؟`))return;
+  USERS=USERS.filter(x=>x.id!==uid);
+  showToast(`تم حذف حساب ${u.name}`);renderAdminPanel();buildLoginScreen();
+}
+
+function adminTransferPatient(pid){
+  const doctors=USERS.filter(u=>u.role==='doctor');
+  if(!doctors.length){showToast('لا يوجد أطباء',true);return;}
+  const opts=doctors.map(d=>`${d.id}:${d.name}`).join('|');
+  const choice=prompt(`نقل المريض إلى:\n${doctors.map((d,i)=>`${i+1}. ${d.name}`).join('\n')}\n\nأدخل الرقم:`);
+  const idx=parseInt(choice)-1;
+  if(idx>=0&&idx<doctors.length){
+    const p=patients.find(x=>x.id===pid);
+    if(p){p.docId=doctors[idx].id;showToast(`✓ تم نقل المريض إلى ${doctors[idx].name}`);renderAll();}
+  }
+}
+
+/* ===== SUPPLY, HISTORY, REPORT, ALERTS ===== */
+function renderSupply(){
+  document.getElementById('supplyList').innerHTML=supplies.length?supplies.map(s=>{
+    const days=daysLeft(s.expiry),expC=days<0?'danger':days<90?'warn':'';
+    return`<div class="si-card"><div class="si-ico"><i class="ti ti-truck-delivery"></i></div>
+      <div class="si-info"><div class="si-drug">${s.drug}</div><div class="si-meta">${s.supplier} · ${s.batch||'—'} · <strong>${s.qty}</strong> جرعة${s.note?' · '+s.note:''}</div></div>
+      <div class="si-dates">
+        <div class="si-d">الرفد: <span>${s.refill||'—'}</span></div>
+        <div class="si-d warn">قبل النفاذ: <span>${s.preExpiry||'—'}</span></div>
+        <div class="si-d ${expC}">النفاذ: <span>${s.expiry||'—'}</span></div>
+      </div>
+      <button class="btn btn-d btn-sm" onclick="deleteSupply(${s.id})"><i class="ti ti-trash"></i></button></div>`;
+  }).join(''):`<div class="empty" style="background:var(--surf);border-radius:12px">لا توجد عمليات رفد</div>`;
+}
+function renderHistory(){
+  const f=(document.getElementById('histFilter')||{}).value||'';
+  const list=f?history.filter(h=>h.type===f):history;
+  const icoMap={disp:'arrow-bar-right',res:'lock',add:'plus',supply:'truck-delivery'};
+  document.getElementById('histList').innerHTML=list.length?list.map(h=>{
+    const ico=icoMap[h.type]||'clock',lbl={disp:'صرف',res:'حجز',add:'إضافة',supply:'رفد'}[h.type]||h.type;
+    return`<div class="hist-item"><div class="hist-ico ${h.type}"><i class="ti ti-${ico}"></i></div>
+      <div class="hist-info"><div class="hist-txt">${h.drug}${h.patient?' — '+h.patient:''} ${h.note?'('+h.note+')':''}</div><div class="hist-date">${h.date}</div></div>
+      <div class="hist-qty ${h.type}">${h.type==='disp'?'-':'+'}${h.qty} <small>${lbl}</small></div></div>`;
+  }).join(''):`<div class="empty">لا توجد عمليات</div>`;
+}
+function clearHistory(){if(confirm('مسح سجل العمليات؟')){history=[];renderHistory();showToast('تم المسح');}}
+function renderReport(){
+  const vp=visiblePatients();
+  const totalDisp=drugs.reduce((s,d)=>s+d.dispensed,0),totalRes=drugs.reduce((s,d)=>s+d.reserved,0),totalRem=drugs.reduce((s,d)=>s+rem(d),0),totalAll=drugs.reduce((s,d)=>s+d.total,0);
+  document.getElementById('reportCards').innerHTML=`
+    <div class="rcard"><div class="rcard-t">إجمالي المصروف</div><div class="rcard-v" style="color:var(--red)">${totalDisp}</div></div>
+    <div class="rcard"><div class="rcard-t">إجمالي المحجوز</div><div class="rcard-v" style="color:var(--amber)">${totalRes}</div></div>
+    <div class="rcard"><div class="rcard-t">إجمالي المتبقي</div><div class="rcard-v" style="color:var(--teal)">${totalRem}</div></div>
+    <div class="rcard"><div class="rcard-t">الكمية الكلية</div><div class="rcard-v" style="color:var(--blue)">${totalAll}</div></div>
+    <div class="rcard"><div class="rcard-t">عدد الأدوية</div><div class="rcard-v" style="color:var(--purple)">${drugs.length}</div></div>
+    <div class="rcard"><div class="rcard-t">${currentUser&&currentUser.role==='doctor'?'مرضاي':'المرضى'}</div><div class="rcard-v" style="color:var(--blue-dark)">${vp.length}</div></div>
+  `;
+  const maxD=Math.max(...drugs.map(d=>d.dispensed),1);
+  document.getElementById('barChart').innerHTML=drugs.map(d=>`<div class="bar-row"><div class="bar-lbl">${d.name}<br><small>${d.brand}</small></div><div class="bar-track"><div class="bar-fill pf-ok" style="width:${Math.round((d.dispensed/maxD)*100)}%"></div></div><div class="bar-num">${d.dispensed}</div></div>`).join('');
+  const diagC={};vp.forEach(p=>{diagC[p.diag]=(diagC[p.diag]||0)+1;});
+  const maxDiag=Math.max(...Object.values(diagC),1);
+  document.getElementById('diagChart').innerHTML=Object.entries(diagC).map(([k,v])=>`<div class="bar-row"><div class="bar-lbl">${k}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round((v/maxDiag)*100)}%;background:var(--blue-mid)"></div></div><div class="bar-num">${v}</div></div>`).join('');
+}
+function renderAlerts(){
+  const al=getAlerts();
+  document.getElementById('alertsFull').innerHTML=al.length
+    ?`<div class="alert-list">${al.map(a=>`<div class="alert-item ${a.type}"><i class="ti ti-${a.type==='danger'?'alert-circle':'alert-triangle'}"></i><span class="alert-txt">${a.msg}</span></div>`).join('')}</div>`
+    :`<div class="empty" style="background:var(--surf);border-radius:12px;color:var(--teal)">لا توجد تنبيهات</div>`;
+}
+
+/* ===== SETTINGS ===== */
+function saveDoc(){
+  if(!currentUser)return;
+  currentUser.name=document.getElementById('setDocName').value.trim()||currentUser.name;
+  currentUser.spec=document.getElementById('setDocSpec').value.trim();
+  currentUser.dept=document.getElementById('setDocDept').value.trim();
+  document.getElementById('docBadgeText').textContent=currentUser.name;
+  showToast('✓ تم حفظ البيانات');renderAll();
+}
+function addDrug(){
+  const n=document.getElementById('nDN').value.trim(),b=document.getElementById('nDB').value.trim();
+  if(!n){showToast('أدخل اسم الدواء',true);return;}
+  const total=parseInt(document.getElementById('nDT').value)||0;
+  if(total<=0){showToast('أدخل الكمية الكلية',true);return;}
+  drugs.push({id:Date.now(),name:n,brand:b||n,cat:document.getElementById('nDC').value,total,dispensed:parseInt(document.getElementById('nDD').value)||0,reserved:parseInt(document.getElementById('nDR').value)||0,expiry:document.getElementById('nDE').value||'2027-12-31',minAlert:parseInt(document.getElementById('nDMin').value)||10});
+  history.unshift({id:Date.now(),type:'add',drug:n,qty:total,note:'إضافة',date:today()});
+  ['nDN','nDB','nDT','nDD','nDR','nDE'].forEach(id=>document.getElementById(id).value='');
+  showToast(`✓ تم إضافة ${n}`);renderAll();
+}
+function addPatient(){
+  const n=document.getElementById('nPN').value.trim(),drug=document.getElementById('nPDrug').value.trim();
+  if(!n||!drug){showToast('أدخل الاسم والدواء',true);return;}
+  if(!currentUser||currentUser.role!=='doctor'&&currentUser.role!=='admin'){showToast('غير مصرح لك بإضافة مرضى',true);return;}
+  patients.push({id:Date.now(),name:n,age:parseInt(document.getElementById('nPA').value)||0,gender:document.getElementById('nPG').value,mrn:document.getElementById('nPID').value,diag:document.getElementById('nPD').value,drug,start:document.getElementById('nPS').value||new Date().toISOString().slice(0,10),dose:document.getElementById('nPDose').value,notes:document.getElementById('nPNotes').value,docId:currentUser.id});
+  ['nPN','nPA','nPID','nPDrug','nPS','nPDose','nPNotes'].forEach(id=>document.getElementById(id).value='');
+  showToast(`✓ تم إضافة ${n}`);renderAll();
+}
+function addSupply(){
+  const n=document.getElementById('nSN').value.trim(),qty=parseInt(document.getElementById('nSQ').value)||0;
+  if(!n||qty<=0){showToast('أدخل الاسم والكمية',true);return;}
+  supplies.unshift({id:Date.now(),drug:n,supplier:document.getElementById('nSSup').value,qty,refill:document.getElementById('nSR').value,preExpiry:document.getElementById('nSP').value,expiry:document.getElementById('nSE').value,batch:document.getElementById('nSBatch').value,note:document.getElementById('nSNote').value});
+  const d=drugs.find(x=>x.name===n);if(d)d.total+=qty;
+  history.unshift({id:Date.now(),type:'supply',drug:n,qty,note:'رفد جديد',date:today()});
+  ['nSN','nSSup','nSQ','nSR','nSP','nSE','nSBatch','nSNote'].forEach(id=>document.getElementById(id).value='');
+  showToast(`✓ رفد ${n} — ${qty} جرعة`);renderAll();
+}
+function deleteDrug(id){if(!confirm('حذف الدواء؟'))return;drugs=drugs.filter(d=>d.id!==id);showToast('تم الحذف');renderAll();}
+function deletePatient(id){
+  const p=patients.find(x=>x.id===id);
+  if(!p)return;
+  if(currentUser&&currentUser.role==='doctor'&&p.docId!==currentUser.id){showToast('لا يمكنك حذف مريض طبيب آخر',true);return;}
+  if(!confirm('حذف المريض؟'))return;
+  patients=patients.filter(x=>x.id!==id);showToast('تم حذف المريض');renderAll();
+}
+function deleteSupply(id){if(!confirm('حذف سجل الرفد؟'))return;supplies=supplies.filter(s=>s.id!==id);showToast('تم الحذف');renderAll();}
+
+function renderAll(){
+  renderDash();renderInv();renderDisp();renderPatients();renderSupply();renderHistory();renderReport();renderAlerts();
+  if(currentUser&&currentUser.role==='admin')renderAdminPanel();
+}
+
+/* ===== AUTH ===== */
+const roleIcons={admin:'ti-shield-check',doctor:'ti-stethoscope',pharmacist:'ti-pill',staff:'ti-package'};
+const roleBg={admin:'rgba(4,44,83,0.12)',doctor:'#E6F1FB',pharmacist:'#E1F5EE',staff:'#FAEEDA'};
+
+/* THEME */
+let isDark=false;
+function toggleTheme(){
+  isDark=!isDark;
+  document.body.classList.toggle('dark',isDark);
+  const icon=document.getElementById('themeIcon');
+  const label=document.getElementById('themeLabel');
+  if(icon){icon.className=isDark?'ti ti-sun':'ti ti-moon';}
+  if(label){label.textContent=isDark?'نهاري':'ليلي';}
+}
+
+/* BACK BUTTON */
+let tabHistory=['dash'];
+function goBack(){
+  if(tabHistory.length>1){
+    tabHistory.pop();
+    const prev=tabHistory[tabHistory.length-1];
+    document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));
+    document.querySelectorAll('.tb').forEach(b=>b.classList.remove('on'));
+    const pg=document.getElementById('pg-'+prev);
+    if(pg)pg.classList.add('on');
+    document.querySelectorAll('.tb').forEach(b=>{if((b.getAttribute('onclick')||'').includes("'"+prev+"'"))b.classList.add('on');});
+    renderAll();
+  }
+}
+
+function buildLoginScreen(){
+  const overlay=document.getElementById('loginOverlay');
+  const isDark=document.body.classList.contains('dark');
+  const nonDoctors=USERS.filter(u=>u.role!=='doctor');
+  const doctors=USERS.filter(u=>u.role==='doctor');
+  const ico3dMap={admin:'ti-shield-check',doctor:'ti-stethoscope',pharmacist:'ti-pill',staff:'ti-package'};
+  const ico3dColor={admin:'navy',doctor:'blue',pharmacist:'teal',staff:'amber'};
+  overlay.innerHTML=`
+  <div style="min-height:100vh;background:${isDark?'#010c1a':'#042C53'};display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;transition:background 0.3s;">
+    <!-- theme toggle on login -->
+    <div style="position:absolute;top:16px;left:16px;">
+      <button onclick="toggleTheme();buildLoginScreen();" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:20px;padding:6px 13px;color:#fff;cursor:pointer;font-family:'Cairo',sans-serif;font-size:12px;display:flex;align-items:center;gap:5px;">
+        <i class="ti ${isDark?'ti-sun':'ti-moon'}" style="font-size:14px;"></i>${isDark?'نهاري':'ليلي'}
+      </button>
+    </div>
+
+    <div style="margin-bottom:22px;text-align:center;">
+      <div style="width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,0.12);border:2px solid rgba(255,255,255,0.25);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;box-shadow:0 6px 24px rgba(0,0,0,0.3);">
+        <svg width="38" height="38" viewBox="0 0 60 60" fill="none">
+          <circle cx="30" cy="30" r="24" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"/>
+          <path d="M18 23c0-3 2.2-5 5-5s5 2 5 5v3c0 1.5 1 3 2.5 3.5s2.5 2.5 2.5 4v3c0 2.5-2 4-4.5 4s-4.5-1.5-4.5-4v-1.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="42" cy="19" r="6" fill="#1D9E75"/>
+          <line x1="42" y1="15.5" x2="42" y2="22.5" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+          <line x1="38.5" y1="19" x2="45.5" y2="19" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <h1 style="font-family:'Tajawal',sans-serif;font-size:22px;font-weight:800;color:#fff;margin-bottom:3px;">نظام مخزن الأدوية البيولوجية</h1>
+      <p style="font-size:12px;color:rgba(255,255,255,0.6);">قسم أمراض الجهاز الهضمي والكبد</p>
+    </div>
+
+    <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;width:100%;max-width:720px;margin-bottom:26px;">
+
+      <!-- DOCTOR CARD — expandable -->
+      <div id="doctorGroupCard" style="background:rgba(255,255,255,0.07);border:1.5px solid rgba(255,255,255,0.13);border-radius:14px;padding:18px 15px;cursor:pointer;min-width:190px;flex:1;max-width:250px;transition:all 0.2s;box-shadow:0 2px 12px rgba(0,0,0,0.2);" onclick="toggleDoctorList()">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:10px;">
+          <div class="ico3d blue" style="width:52px;height:52px;border-radius:16px;">
+            <i class="ti ti-stethoscope" style="font-size:24px;"></i>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-size:14px;font-weight:700;color:#fff;font-family:'Cairo',sans-serif;">طبيب</div>
+            <div style="font-size:10.5px;color:rgba(255,255,255,0.5);margin-top:2px;">${doctors.length} طبيب مسجل</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:4px;font-size:11px;color:rgba(255,255,255,0.45);">
+            <span id="docListArrow">اختر طبيباً</span>
+            <i class="ti ti-chevron-down" id="docArrowIcon" style="font-size:13px;transition:transform 0.25s;"></i>
+          </div>
+        </div>
+        <div id="doctorSubList" style="display:none;margin-top:12px;border-top:0.5px solid rgba(255,255,255,0.12);padding-top:10px;">
+          ${doctors.map(u=>`
+            <div onclick="event.stopPropagation();selectRole('${u.id}')" id="roleBtn_${u.id}"
+              style="display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:9px;cursor:pointer;transition:background 0.15s;margin-bottom:5px;border:1px solid transparent;">
+              <div style="width:34px;height:34px;border-radius:10px;background:${u.color};display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;font-weight:700;font-size:12px;box-shadow:0 3px 8px rgba(0,0,0,0.3);">
+                ${u.name.split(' ').slice(0,2).map(w=>w[0]).join('')}
+              </div>
+              <div style="flex:1;text-align:right;">
+                <div style="font-size:12.5px;font-weight:600;color:#fff;">${u.name}</div>
+                <div style="font-size:10.5px;color:rgba(255,255,255,0.45);">${u.spec||'طبيب'}</div>
+              </div>
+              <i class="ti ti-chevron-left" style="font-size:12px;color:rgba(255,255,255,0.3);"></i>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <!-- other role cards -->
+      ${nonDoctors.map(u=>`
+        <button onclick="selectRole('${u.id}')" id="roleBtn_${u.id}"
+          style="background:rgba(255,255,255,0.07);border:1.5px solid rgba(255,255,255,0.13);border-radius:14px;padding:18px 13px;cursor:pointer;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;min-width:150px;flex:1;max-width:200px;box-shadow:0 2px 12px rgba(0,0,0,0.2);transition:all 0.2s;">
+          <div class="ico3d ${ico3dColor[u.role]}" style="width:52px;height:52px;border-radius:16px;">
+            <i class="ti ${ico3dMap[u.role]}" style="font-size:24px;"></i>
+          </div>
+          <div>
+            <div style="font-size:14px;font-weight:700;color:#fff;font-family:'Cairo',sans-serif;">${u.roleLabel}</div>
+            <div style="font-size:10.5px;color:rgba(255,255,255,0.5);margin-top:2px;">${u.name}</div>
+          </div>
+        </button>
+      `).join('')}
+    </div>
+
+    <div id="loginForm" style="display:none;background:rgba(255,255,255,0.07);border:0.5px solid rgba(255,255,255,0.15);border-radius:16px;padding:24px;width:100%;max-width:340px;box-shadow:0 8px 32px rgba(0,0,0,0.3);">
+      <div id="selRoleLabel" style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:12px;border-bottom:0.5px solid rgba(255,255,255,0.1);"></div>
+      <div style="margin-bottom:11px;">
+        <label style="font-size:11.5px;color:rgba(255,255,255,0.6);display:block;margin-bottom:4px;">اسم المستخدم</label>
+        <input id="loginUser" type="text" placeholder="username"
+          style="width:100%;padding:10px 13px;border-radius:9px;border:0.5px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.08);color:#fff;font-family:'Cairo',sans-serif;font-size:13px;">
+      </div>
+      <div style="margin-bottom:14px;">
+        <label style="font-size:11.5px;color:rgba(255,255,255,0.6);display:block;margin-bottom:4px;">كلمة المرور</label>
+        <input id="loginPass" type="password" placeholder="password"
+          style="width:100%;padding:10px 13px;border-radius:9px;border:0.5px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.08);color:#fff;font-family:'Cairo',sans-serif;font-size:13px;">
+      </div>
+      <div id="loginErr" style="display:none;background:rgba(163,45,45,0.3);border:0.5px solid rgba(240,149,149,0.4);border-radius:8px;padding:8px 12px;font-size:12px;color:#F09595;margin-bottom:12px;">
+        بيانات الدخول غير صحيحة
+      </div>
+      <button onclick="doLogin()" style="width:100%;padding:11px;background:linear-gradient(135deg,#1D9E75,#0F6E56);color:#fff;border:none;border-radius:9px;font-family:'Cairo',sans-serif;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(15,110,86,0.4);">
+        <i class="ti ti-login" style="margin-left:5px;"></i>دخول
+      </button>
+      <div style="margin-top:9px;text-align:center;">
+        <span style="font-size:10.5px;color:rgba(255,255,255,0.3);">مستخدم: <span id="hU" style="color:rgba(255,255,255,0.6)"></span> · كلمة المرور: <span id="hP" style="color:rgba(255,255,255,0.6)"></span></span>
+      </div>
+      <button onclick="backToRoles()" style="width:100%;margin-top:8px;padding:8px;background:transparent;color:rgba(255,255,255,0.4);border:0.5px solid rgba(255,255,255,0.13);border-radius:8px;font-family:'Cairo',sans-serif;font-size:12px;cursor:pointer;">
+        <i class="ti ti-arrow-right" style="margin-left:4px;"></i>رجوع لاختيار الحساب
+      </button>
+    </div>
+  </div>`;
+}
+
+let docListOpen=false;
+function toggleDoctorList(){
+  docListOpen=!docListOpen;
+  const sub=document.getElementById('doctorSubList');
+  const arrow=document.getElementById('docArrowIcon');
+  const card=document.getElementById('doctorGroupCard');
+  const lbl=document.getElementById('docListArrow');
+  if(docListOpen){
+    sub.style.display='block';
+    arrow.style.transform='rotate(180deg)';
+    card.style.border='1.5px solid rgba(24,95,165,0.6)';
+    card.style.background='rgba(24,95,165,0.12)';
+    lbl.textContent='اختر طبيباً';
+  } else {
+    sub.style.display='none';
+    arrow.style.transform='rotate(0)';
+    card.style.border='1.5px solid rgba(255,255,255,0.13)';
+    card.style.background='rgba(255,255,255,0.07)';
+    lbl.textContent='اختر طبيباً';
+  }
+}
+
+function backToRoles(){
+  document.getElementById('loginForm').style.display='none';
+  selectedUserId=null;
+  document.querySelectorAll('[id^="roleBtn_"]').forEach(b=>{
+    if(b.tagName==='BUTTON'){b.style.border='1.5px solid rgba(255,255,255,0.13)';b.style.background='rgba(255,255,255,0.07)';}
+    else{b.style.border='1px solid transparent';b.style.background='';}
+  });
+}
+
+let selectedUserId=null;
+function selectRole(uid){
+  selectedUserId=uid;
+  const u=USERS.find(x=>x.id===uid);
+
+  /* highlight doctor sub-item if doctor */
+  if(u.role==='doctor'){
+    document.querySelectorAll('[id^="roleBtn_"]').forEach(b=>{
+      if(b.tagName!=='BUTTON'){b.style.border='1px solid transparent';b.style.background='';}
+    });
+    const btn=document.getElementById('roleBtn_'+uid);
+    if(btn){btn.style.border=`1px solid ${u.color}`;btn.style.background='rgba(255,255,255,0.1)';}
+  } else {
+    /* highlight non-doctor card */
+    document.querySelectorAll('[id^="roleBtn_"]').forEach(b=>{
+      if(b.tagName==='BUTTON'){b.style.border='1.5px solid rgba(255,255,255,0.13)';b.style.background='rgba(255,255,255,0.07)';}
+    });
+    const btn=document.getElementById('roleBtn_'+uid);
+    if(btn){btn.style.border=`2px solid ${u.color}`;btn.style.background='rgba(255,255,255,0.13)';}
+  }
+
+  document.getElementById('loginForm').style.display='block';
+  document.getElementById('loginUser').value='';
+  document.getElementById('loginPass').value='';
+  document.getElementById('loginErr').style.display='none';
+  document.getElementById('hU').textContent=u.username;
+  document.getElementById('hP').textContent=u.password;
+  const ico3dColor={admin:'navy',doctor:'blue',pharmacist:'teal',staff:'amber'};
+  const ico3dMap={admin:'ti-shield-check',doctor:'ti-stethoscope',pharmacist:'ti-pill',staff:'ti-package'};
+  document.getElementById('selRoleLabel').innerHTML=`
+    <div class="ico3d ${ico3dColor[u.role]}" style="width:40px;height:40px;border-radius:11px;flex-shrink:0;">
+      ${u.role==='doctor'
+        ?`<span style="color:#fff;font-weight:700;font-size:13px;">${u.name.split(' ').slice(0,2).map(w=>w[0]).join('')}</span>`
+        :`<i class="ti ${ico3dMap[u.role]}" style="font-size:18px;"></i>`}
+    </div>
+    <div>
+      <div style="font-size:13.5px;font-weight:700;color:#fff;">${u.name}</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.5);">${u.roleLabel}${u.spec?' · '+u.spec:''}</div>
+    </div>`;
+  setTimeout(()=>document.getElementById('loginUser').focus(),80);
+}
+
+function doLogin(){
+  if(!selectedUserId){showLoginErr('اختر نوع الحساب');return;}
+  const u=USERS.find(x=>x.id===selectedUserId);
+  if(!u){showLoginErr('المستخدم غير موجود');return;}
+  if(document.getElementById('loginUser').value.trim()!==u.username||document.getElementById('loginPass').value!==u.password){
+    document.getElementById('loginErr').style.display='block';return;
+  }
+  currentUser=u;
+  document.getElementById('loginOverlay').style.display='none';
+  document.getElementById('mainApp').style.display='block';
+  applyPermissions(u);
+  document.getElementById('docBadgeText').textContent=u.name;
+  document.getElementById('docBadge').style.background=u.color;
+  showToast(`مرحباً ${u.name}`);
+  if(u.role==='settings'||u.role==='admin'){document.getElementById('setDocName').value=u.name;document.getElementById('setDocSpec').value=u.spec||'';}
+  renderAll();
+}
+function showLoginErr(msg){const el=document.getElementById('loginErr');if(el){el.textContent=msg;el.style.display='block';}}
+
+function applyPermissions(u){
+  const p=PERMS[u.role]||{};
+  const map={dash:'dash',inv:'inv',disp:'disp',patients:'patients',supply:'supply',history:'history',report:'report',alerts:'alerts',settings:'settings',admin:'admin'};
+  document.querySelectorAll('.tb').forEach(btn=>{
+    const oc=btn.getAttribute('onclick')||'';
+    for(const [tab,key] of Object.entries(map)){
+      if(oc.includes("'"+tab+"'")){btn.style.display=p[key]?'':'none';break;}
+    }
+  });
+  const firstTab=Object.entries(map).find(([tab,key])=>p[key]);
+  if(firstTab)switchTab(firstTab[0]);
+}
+
+function logout(){
+  currentUser=null;selectedUserId=null;
+  document.getElementById('mainApp').style.display='none';
+  document.getElementById('loginOverlay').style.display='block';
+  buildLoginScreen();
+}
+
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&!currentUser)doLogin();});
+
+buildLoginScreen();
+</script>
+</body>
+</html>
