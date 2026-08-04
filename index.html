@@ -402,8 +402,8 @@ html,body{min-height:100%;font-family:'Cairo',sans-serif;direction:rtl;backgroun
       <div style="font-size:13px;font-weight:600;color:var(--txt);margin-bottom:10px;"><i class="ti ti-user-plus" style="color:var(--teal);margin-left:5px;"></i>إضافة طبيب جديد</div>
       <div class="fgrid4">
         <div class="fg"><label>اسم الطبيب</label><input type="text" id="admDocName" placeholder="د. الاسم الكامل"></div>
-        <div class="fg"><label>اسم المستخدم</label><input type="text" id="admDocUser" placeholder="username"></div>
-        <div class="fg"><label>كلمة المرور</label><input type="text" id="admDocPass" placeholder="password"></div>
+        <div class="fg"><label>البريد الإلكتروني</label><input type="email" id="admDocUser" placeholder="doctor@example.com"></div>
+        <div class="fg"><label>كلمة المرور</label><input type="password" id="admDocPass" placeholder="6 أحرف على الأقل"></div>
         <div class="fg"><label>التخصص</label><input type="text" id="admDocSpec" placeholder="أمراض الجهاز الهضمي"></div>
         <div class="fg"><label>الدور</label>
           <select id="admDocRole">
@@ -439,38 +439,25 @@ html,body{min-height:100%;font-family:'Cairo',sans-serif;direction:rtl;backgroun
 
 </div><!-- end mainApp -->
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-/* ===== DATA ===== */
-let drugs=[
-  {id:1,name:"إنفليكسيماب",brand:"Remicade",cat:"مضاد TNF-α",total:60,dispensed:22,reserved:8,expiry:"2026-09-15",minAlert:10},
-  {id:2,name:"أداليموماب",brand:"Humira",cat:"مضاد TNF-α",total:80,dispensed:35,reserved:12,expiry:"2026-07-20",minAlert:10},
-  {id:3,name:"فيدوليزوماب",brand:"Entyvio",cat:"مضاد انتغرين",total:40,dispensed:18,reserved:6,expiry:"2027-02-10",minAlert:8},
-  {id:4,name:"أوستيكينوماب",brand:"Stelara",cat:"مضاد IL-12/23",total:30,dispensed:10,reserved:5,expiry:"2026-11-30",minAlert:5},
-  {id:5,name:"ريساكيزوماب",brand:"Skyrizi",cat:"مضاد IL-23",total:20,dispensed:8,reserved:4,expiry:"2026-06-05",minAlert:5},
-  {id:6,name:"توفاسيتينيب",brand:"Xeljanz",cat:"مضاد JAK",total:90,dispensed:42,reserved:10,expiry:"2027-04-18",minAlert:15},
-  {id:7,name:"سيرتوليزوماب",brand:"Cimzia",cat:"مضاد TNF-α",total:25,dispensed:14,reserved:3,expiry:"2026-08-22",minAlert:5}
-];
+/* ===== SUPABASE ===== */
+const SUPABASE_URL='https://jodbdggoinmefbvcwyla.supabase.co';
+const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpvZGJkZ2dvaW5tZWZidmN3eWxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4NzIzMDUsImV4cCI6MjEwMTQ0ODMwNX0.jeM2ySzT19m8XxspBXlmIC9En10S-VZmGRV30FdfRGY';
+const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+/* separate client (no shared session) so admin can create accounts without being signed out */
+const sbAuth=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{persistSession:false,autoRefreshToken:false}});
+
+/* ===== DATA (loaded from Supabase) ===== */
+let drugs=[];
 let patients=[];
-let supplies=[
-  {id:1,drug:"إنفليكسيماب",supplier:"شركة جانسن",qty:20,refill:"2025-12-01",preExpiry:"2026-08-15",expiry:"2026-09-15",batch:"JNS-2025-1201",note:""},
-  {id:2,drug:"أداليموماب",supplier:"شركة أبفي",qty:30,refill:"2026-01-10",preExpiry:"2026-06-20",expiry:"2026-07-20",batch:"ABI-2026-0110",note:""},
-  {id:3,drug:"فيدوليزوماب",supplier:"شركة تاكيدا",qty:15,refill:"2026-02-15",preExpiry:"2027-01-10",expiry:"2027-02-10",batch:"TKD-2026-0215",note:""}
-];
+let supplies=[];
 let reservations=[];
 let history=[];
 let docInfo={name:"",spec:"",lic:"",dept:""};
 
-/* ===== USER SYSTEM ===== */
-let USERS=[
-  {id:'admin', name:'المدير', role:'admin', roleLabel:'طبيب مدير',
-   username:'admin', password:'admin123', color:'#042C53', spec:'', dept:''},
-  {id:'doc1', name:'أحمد جاسم الكوفي', role:'doctor', roleLabel:'طبيب',
-   username:'doctor1', password:'123456', color:'#185FA5', spec:'', dept:''},
-  {id:'pharm1', name:'الصيدلاني', role:'pharmacist', roleLabel:'صيدلاني',
-   username:'pharmacist', password:'ph123', color:'#BA7517', spec:'', dept:''},
-  {id:'staff1', name:'عامل المخزن', role:'staff', roleLabel:'عامل مخزن',
-   username:'staff', password:'st123', color:'#5F5E5A', spec:'', dept:''}
-];
+/* ===== USER SYSTEM (profiles table; passwords live in Supabase Auth) ===== */
+let USERS=[];
 
 const PERMS={
   admin:  {dash:true,inv:true,disp:true,patients:true,supply:true,history:true,report:true,alerts:true,settings:true,admin:true},
@@ -480,6 +467,34 @@ const PERMS={
 };
 
 let currentUser=null;
+
+/* ===== DB <-> APP MAPPERS ===== */
+function mapDrug(r){return{id:r.id,name:r.name,brand:r.brand,cat:r.cat,total:r.total,dispensed:r.dispensed,reserved:r.reserved,expiry:r.expiry,minAlert:r.min_alert};}
+function mapPatient(r){return{id:r.id,name:r.name,age:r.age,gender:r.gender,mrn:r.mrn,diag:r.diag,drug:r.drug,start:r.start,dose:r.dose,notes:r.notes,docId:r.doc_id};}
+function mapSupply(r){return{id:r.id,drug:r.drug,supplier:r.supplier,qty:r.qty,refill:r.refill,preExpiry:r.pre_expiry,expiry:r.expiry,batch:r.batch,note:r.note};}
+function mapReservation(r){return{id:r.id,patId:r.patient_id,drugId:r.drug_id,qty:r.qty,delivery:r.delivery};}
+function mapHistory(r){return{id:r.id,type:r.type,drug:r.drug,patient:r.patient,qty:r.qty,note:r.note,date:new Date(r.created_at).toLocaleDateString('ar-IQ')};}
+function mapProfile(r){return{id:r.id,name:r.name,role:r.role,roleLabel:r.role_label,color:r.color,spec:r.spec,dept:r.dept,email:r.email};}
+
+/* ===== DATA LOADING ===== */
+async function loadProfiles(){
+  const{data,error}=await sb.from('profiles').select('*').order('created_at');
+  if(!error)USERS=(data||[]).map(mapProfile);
+}
+async function loadAll(){
+  const[d,p,s,r,h]=await Promise.all([
+    sb.from('drugs').select('*').order('id'),
+    sb.from('patients').select('*').order('id'),
+    sb.from('supplies').select('*').order('created_at',{ascending:false}),
+    sb.from('reservations').select('*'),
+    sb.from('history').select('*').order('created_at',{ascending:false}).limit(300)
+  ]);
+  drugs=(d.data||[]).map(mapDrug);
+  patients=(p.data||[]).map(mapPatient);
+  supplies=(s.data||[]).map(mapSupply);
+  reservations=(r.data||[]).map(mapReservation);
+  history=(h.data||[]).map(mapHistory);
+}
 
 /* ===== HELPERS ===== */
 function rem(d){return Math.max(0,d.total-d.dispensed-d.reserved);}
@@ -498,12 +513,10 @@ function showToast(msg,err){
   t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),3000);
 }
 
-/* Returns patients visible to current user */
+/* patients array is already scoped server-side by RLS per current user's role */
 function visiblePatients(){
   if(!currentUser)return[];
-  if(currentUser.role==='admin'||currentUser.role==='pharmacist')return patients;
-  if(currentUser.role==='doctor')return patients.filter(p=>p.docId===currentUser.id);
-  return[];
+  return patients;
 }
 
 function doctorName(docId){
@@ -612,30 +625,42 @@ function updateResInfo(){
   if(d){el.style.display='block';el.innerHTML=`متبقي: <strong style="color:var(--teal)">${rem(d)}</strong> · محجوز حالياً: <strong>${d.reserved}</strong>`;}
   else el.style.display='none';
 }
-function doDispense(){
+async function doDispense(){
   const pid=parseInt(document.getElementById('dispPatient').value),did=parseInt(document.getElementById('dispDrug').value),qty=parseInt(document.getElementById('dispQty').value)||0,note=document.getElementById('dispNote').value;
   if(!pid||!did){showToast('اختر المريض والدواء',true);return;}
+  if(qty<=0){showToast('الكمية يجب أن تكون أكبر من صفر',true);return;}
   const d=drugs.find(x=>x.id===did),p=patients.find(x=>x.id===pid);
-  if(!d||rem(d)<qty){showToast(`الكمية المطلوبة أكبر من المتاح (${rem(d)})`,true);return;}
-  d.dispensed+=qty;
-  history.unshift({id:Date.now(),type:'disp',drug:d.name,patient:p.name,qty,note,date:today()});
+  if(!d||rem(d)<qty){showToast(`الكمية المطلوبة أكبر من المتاح (${d?rem(d):0})`,true);return;}
+  const{error}=await sb.from('drugs').update({dispensed:d.dispensed+qty}).eq('id',d.id);
+  if(error){showToast('خطأ: '+error.message,true);return;}
+  await sb.from('history').insert({type:'disp',drug:d.name,patient:p.name,qty,note});
   document.getElementById('dispQty').value=1;document.getElementById('dispNote').value='';
-  showToast(`✓ صرف ${qty} جرعة من ${d.name} لـ ${p.name}`);renderAll();
+  showToast(`✓ صرف ${qty} جرعة من ${d.name} لـ ${p.name}`);
+  await loadAll();renderAll();
 }
-function doReserve(){
+async function doReserve(){
   const pid=parseInt(document.getElementById('resPatient').value),did=parseInt(document.getElementById('resDrug').value),qty=parseInt(document.getElementById('resQty').value)||0,delivery=document.getElementById('resDelivery').value;
   if(!pid||!did){showToast('اختر المريض والدواء',true);return;}
+  if(qty<=0){showToast('الكمية يجب أن تكون أكبر من صفر',true);return;}
   const d=drugs.find(x=>x.id===did),p=patients.find(x=>x.id===pid);
   if(!d||rem(d)<qty){showToast('الكمية المطلوبة أكبر من المتاح',true);return;}
-  d.reserved+=qty;reservations.push({id:Date.now(),patId:pid,drugId:did,qty,delivery});
-  history.unshift({id:Date.now(),type:'res',drug:d.name,patient:p.name,qty,note:'حجز',date:today()});
+  const{error:e1}=await sb.from('drugs').update({reserved:d.reserved+qty}).eq('id',d.id);
+  if(e1){showToast('خطأ: '+e1.message,true);return;}
+  await sb.from('reservations').insert({patient_id:pid,drug_id:did,qty,delivery:delivery||null});
+  await sb.from('history').insert({type:'res',drug:d.name,patient:p.name,qty,note:'حجز'});
   document.getElementById('resQty').value=1;document.getElementById('resDelivery').value='';
-  showToast(`✓ حجز ${qty} جرعة من ${d.name} لـ ${p.name}`);renderAll();
+  showToast(`✓ حجز ${qty} جرعة من ${d.name} لـ ${p.name}`);
+  await loadAll();renderAll();
 }
-function cancelReserv(id){
+async function cancelReserv(id){
   const r=reservations.find(x=>x.id===id);
-  if(r){const d=drugs.find(x=>x.id===r.drugId);if(d)d.reserved=Math.max(0,d.reserved-r.qty);}
-  reservations=reservations.filter(x=>x.id!==id);showToast('تم إلغاء الحجز');renderAll();
+  if(r){
+    const d=drugs.find(x=>x.id===r.drugId);
+    if(d)await sb.from('drugs').update({reserved:Math.max(0,d.reserved-r.qty)}).eq('id',d.id);
+  }
+  await sb.from('reservations').delete().eq('id',id);
+  showToast('تم إلغاء الحجز');
+  await loadAll();renderAll();
 }
 
 /* ===== RENDER PATIENTS (own only) ===== */
@@ -684,7 +709,7 @@ function renderAdminPanel(){
       <div style="width:38px;height:38px;border-radius:50%;background:${u.color};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px;flex-shrink:0;">${u.name.split(' ').slice(0,2).map(w=>w[0]).join('')}</div>
       <div style="flex:1;">
         <div style="font-size:13.5px;font-weight:600;color:var(--txt);">${u.name}</div>
-        <div style="font-size:11.5px;color:var(--muted);">${u.role==='admin'?'مدير النظام':u.roleLabel} · ${u.username} ${u.spec?'· '+u.spec:''}</div>
+        <div style="font-size:11.5px;color:var(--muted);">${u.role==='admin'?'مدير النظام':u.roleLabel} · ${u.email||'—'} ${u.spec?'· '+u.spec:''}</div>
       </div>
       <span class="bdg bdg-b" style="margin-left:8px;">${myPats.length} مريض</span>
       ${u.role!=='admin'?`<button class="btn btn-d btn-sm" onclick="adminDeleteDoctor('${u.id}')"><i class="ti ti-trash"></i></button>`:''}
@@ -743,39 +768,48 @@ function renderAdminPatients(){
   }).join('')||`<div class="empty" style="grid-column:1/-1">لا يوجد مرضى</div>`;
 }
 
-function adminAddDoctor(){
+async function adminAddDoctor(){
   const name=document.getElementById('admDocName').value.trim();
-  const uname=document.getElementById('admDocUser').value.trim();
+  const email=document.getElementById('admDocUser').value.trim();
   const pass=document.getElementById('admDocPass').value.trim();
   const spec=document.getElementById('admDocSpec').value.trim();
   const role=document.getElementById('admDocRole').value;
   const dept=document.getElementById('admDocDept').value.trim();
-  if(!name||!uname||!pass){showToast('يرجى إدخال الاسم واسم المستخدم وكلمة المرور',true);return;}
-  if(USERS.find(u=>u.username===uname)){showToast('اسم المستخدم موجود مسبقاً',true);return;}
+  if(!name||!email||!pass){showToast('يرجى إدخال الاسم والبريد الإلكتروني وكلمة المرور',true);return;}
+  if(pass.length<6){showToast('كلمة المرور يجب ألا تقل عن 6 أحرف',true);return;}
+  const{data,error}=await sbAuth.auth.signUp({email,password:pass});
+  if(error){showToast('خطأ: '+error.message,true);return;}
+  if(!data.user){showToast('تعذر إنشاء الحساب',true);return;}
   const colors=['#185FA5','#0F6E56','#534AB7','#BA7517','#A32D2D','#3B6D11'];
-  const newId='doc'+Date.now();
-  USERS.push({id:newId,name,role,roleLabel:role==='doctor'?'طبيب':role==='pharmacist'?'صيدلاني':'عامل مخزن',username:uname,password:pass,color:colors[USERS.length%colors.length],spec,dept});
+  const roleLabel=role==='doctor'?'طبيب':role==='pharmacist'?'صيدلاني':'عامل مخزن';
+  const{error:e2}=await sb.from('profiles').insert({id:data.user.id,name,email,role,role_label:roleLabel,color:colors[USERS.length%colors.length],spec,dept});
+  if(e2){showToast('خطأ بإنشاء الملف الشخصي: '+e2.message,true);return;}
   ['admDocName','admDocUser','admDocPass','admDocSpec','admDocDept'].forEach(id=>document.getElementById(id).value='');
-  showToast(`✓ تم إضافة حساب ${name}`);renderAdminPanel();buildLoginScreen();
+  showToast(`✓ تم إضافة حساب ${name}`);
+  await loadProfiles();renderAdminPanel();buildLoginScreen();
 }
 
-function adminDeleteDoctor(uid){
+async function adminDeleteDoctor(uid){
   const u=USERS.find(x=>x.id===uid);
+  if(!u)return;
   const myPats=patients.filter(p=>p.docId===uid);
   if(myPats.length&&!confirm(`${u.name} لديه ${myPats.length} مريض. هل تريد حذف الحساب؟`))return;
-  USERS=USERS.filter(x=>x.id!==uid);
-  showToast(`تم حذف حساب ${u.name}`);renderAdminPanel();buildLoginScreen();
+  const{error}=await sb.from('profiles').delete().eq('id',uid);
+  if(error){showToast('خطأ: '+error.message,true);return;}
+  showToast(`تم حذف حساب ${u.name} من النظام (لحذف بيانات الدخول نهائيًا: لوحة Supabase → Authentication → Users)`);
+  await loadProfiles();renderAdminPanel();buildLoginScreen();
 }
 
-function adminTransferPatient(pid){
+async function adminTransferPatient(pid){
   const doctors=USERS.filter(u=>u.role==='doctor');
   if(!doctors.length){showToast('لا يوجد أطباء',true);return;}
-  const opts=doctors.map(d=>`${d.id}:${d.name}`).join('|');
   const choice=prompt(`نقل المريض إلى:\n${doctors.map((d,i)=>`${i+1}. ${d.name}`).join('\n')}\n\nأدخل الرقم:`);
   const idx=parseInt(choice)-1;
   if(idx>=0&&idx<doctors.length){
-    const p=patients.find(x=>x.id===pid);
-    if(p){p.docId=doctors[idx].id;showToast(`✓ تم نقل المريض إلى ${doctors[idx].name}`);renderAll();}
+    const{error}=await sb.from('patients').update({doc_id:doctors[idx].id}).eq('id',pid);
+    if(error){showToast('خطأ: '+error.message,true);return;}
+    showToast(`✓ تم نقل المريض إلى ${doctors[idx].name}`);
+    await loadAll();renderAll();
   }
 }
 
@@ -804,7 +838,13 @@ function renderHistory(){
       <div class="hist-qty ${h.type}">${h.type==='disp'?'-':'+'}${h.qty} <small>${lbl}</small></div></div>`;
   }).join(''):`<div class="empty">لا توجد عمليات</div>`;
 }
-function clearHistory(){if(confirm('مسح سجل العمليات؟')){history=[];renderHistory();showToast('تم المسح');}}
+async function clearHistory(){
+  if(!currentUser||currentUser.role!=='admin'){showToast('هذه الصلاحية للمدير فقط',true);return;}
+  if(!confirm('مسح سجل العمليات؟'))return;
+  await sb.from('history').delete().gte('id',0);
+  showToast('تم المسح');
+  await loadAll();renderAll();
+}
 function renderReport(){
   const vp=visiblePatients();
   const totalDisp=drugs.reduce((s,d)=>s+d.dispensed,0),totalRes=drugs.reduce((s,d)=>s+d.reserved,0),totalRem=drugs.reduce((s,d)=>s+rem(d),0),totalAll=drugs.reduce((s,d)=>s+d.total,0);
@@ -830,50 +870,76 @@ function renderAlerts(){
 }
 
 /* ===== SETTINGS ===== */
-function saveDoc(){
+async function saveDoc(){
   if(!currentUser)return;
-  currentUser.name=document.getElementById('setDocName').value.trim()||currentUser.name;
-  currentUser.spec=document.getElementById('setDocSpec').value.trim();
-  currentUser.dept=document.getElementById('setDocDept').value.trim();
+  const name=document.getElementById('setDocName').value.trim()||currentUser.name;
+  const spec=document.getElementById('setDocSpec').value.trim();
+  const dept=document.getElementById('setDocDept').value.trim();
+  const{error}=await sb.from('profiles').update({name,spec,dept}).eq('id',currentUser.id);
+  if(error){showToast('خطأ: '+error.message,true);return;}
+  currentUser.name=name;currentUser.spec=spec;currentUser.dept=dept;
   document.getElementById('docBadgeText').textContent=currentUser.name;
-  showToast('✓ تم حفظ البيانات');renderAll();
+  showToast('✓ تم حفظ البيانات');
+  await loadProfiles();renderAll();
 }
-function addDrug(){
+async function addDrug(){
   const n=document.getElementById('nDN').value.trim(),b=document.getElementById('nDB').value.trim();
   if(!n){showToast('أدخل اسم الدواء',true);return;}
   const total=parseInt(document.getElementById('nDT').value)||0;
   if(total<=0){showToast('أدخل الكمية الكلية',true);return;}
-  drugs.push({id:Date.now(),name:n,brand:b||n,cat:document.getElementById('nDC').value,total,dispensed:parseInt(document.getElementById('nDD').value)||0,reserved:parseInt(document.getElementById('nDR').value)||0,expiry:document.getElementById('nDE').value||'2027-12-31',minAlert:parseInt(document.getElementById('nDMin').value)||10});
-  history.unshift({id:Date.now(),type:'add',drug:n,qty:total,note:'إضافة',date:today()});
+  const row={name:n,brand:b||n,cat:document.getElementById('nDC').value,total,dispensed:parseInt(document.getElementById('nDD').value)||0,reserved:parseInt(document.getElementById('nDR').value)||0,expiry:document.getElementById('nDE').value||'2027-12-31',min_alert:parseInt(document.getElementById('nDMin').value)||10};
+  const{error}=await sb.from('drugs').insert(row);
+  if(error){showToast('خطأ: '+error.message,true);return;}
+  await sb.from('history').insert({type:'add',drug:n,qty:total,note:'إضافة'});
   ['nDN','nDB','nDT','nDD','nDR','nDE'].forEach(id=>document.getElementById(id).value='');
-  showToast(`✓ تم إضافة ${n}`);renderAll();
+  showToast(`✓ تم إضافة ${n}`);
+  await loadAll();renderAll();
 }
-function addPatient(){
+async function addPatient(){
   const n=document.getElementById('nPN').value.trim(),drug=document.getElementById('nPDrug').value.trim();
   if(!n||!drug){showToast('أدخل الاسم والدواء',true);return;}
   if(!currentUser||currentUser.role!=='doctor'&&currentUser.role!=='admin'){showToast('غير مصرح لك بإضافة مرضى',true);return;}
-  patients.push({id:Date.now(),name:n,age:parseInt(document.getElementById('nPA').value)||0,gender:document.getElementById('nPG').value,mrn:document.getElementById('nPID').value,diag:document.getElementById('nPD').value,drug,start:document.getElementById('nPS').value||new Date().toISOString().slice(0,10),dose:document.getElementById('nPDose').value,notes:document.getElementById('nPNotes').value,docId:currentUser.id});
+  const row={name:n,age:parseInt(document.getElementById('nPA').value)||0,gender:document.getElementById('nPG').value,mrn:document.getElementById('nPID').value,diag:document.getElementById('nPD').value,drug,start:document.getElementById('nPS').value||new Date().toISOString().slice(0,10),dose:document.getElementById('nPDose').value,notes:document.getElementById('nPNotes').value,doc_id:currentUser.id};
+  const{error}=await sb.from('patients').insert(row);
+  if(error){showToast('خطأ: '+error.message,true);return;}
   ['nPN','nPA','nPID','nPDrug','nPS','nPDose','nPNotes'].forEach(id=>document.getElementById(id).value='');
-  showToast(`✓ تم إضافة ${n}`);renderAll();
+  showToast(`✓ تم إضافة ${n}`);
+  await loadAll();renderAll();
 }
-function addSupply(){
+async function addSupply(){
   const n=document.getElementById('nSN').value.trim(),qty=parseInt(document.getElementById('nSQ').value)||0;
   if(!n||qty<=0){showToast('أدخل الاسم والكمية',true);return;}
-  supplies.unshift({id:Date.now(),drug:n,supplier:document.getElementById('nSSup').value,qty,refill:document.getElementById('nSR').value,preExpiry:document.getElementById('nSP').value,expiry:document.getElementById('nSE').value,batch:document.getElementById('nSBatch').value,note:document.getElementById('nSNote').value});
-  const d=drugs.find(x=>x.name===n);if(d)d.total+=qty;
-  history.unshift({id:Date.now(),type:'supply',drug:n,qty,note:'رفد جديد',date:today()});
+  const row={drug:n,supplier:document.getElementById('nSSup').value,qty,refill:document.getElementById('nSR').value||null,pre_expiry:document.getElementById('nSP').value||null,expiry:document.getElementById('nSE').value||null,batch:document.getElementById('nSBatch').value,note:document.getElementById('nSNote').value};
+  const{error}=await sb.from('supplies').insert(row);
+  if(error){showToast('خطأ: '+error.message,true);return;}
+  const d=drugs.find(x=>x.name===n);
+  if(d)await sb.from('drugs').update({total:d.total+qty}).eq('id',d.id);
+  await sb.from('history').insert({type:'supply',drug:n,qty,note:'رفد جديد'});
   ['nSN','nSSup','nSQ','nSR','nSP','nSE','nSBatch','nSNote'].forEach(id=>document.getElementById(id).value='');
-  showToast(`✓ رفد ${n} — ${qty} جرعة`);renderAll();
+  showToast(`✓ رفد ${n} — ${qty} جرعة`);
+  await loadAll();renderAll();
 }
-function deleteDrug(id){if(!confirm('حذف الدواء؟'))return;drugs=drugs.filter(d=>d.id!==id);showToast('تم الحذف');renderAll();}
-function deletePatient(id){
+async function deleteDrug(id){
+  if(!confirm('حذف الدواء؟'))return;
+  await sb.from('drugs').delete().eq('id',id);
+  showToast('تم الحذف');
+  await loadAll();renderAll();
+}
+async function deletePatient(id){
   const p=patients.find(x=>x.id===id);
   if(!p)return;
   if(currentUser&&currentUser.role==='doctor'&&p.docId!==currentUser.id){showToast('لا يمكنك حذف مريض طبيب آخر',true);return;}
   if(!confirm('حذف المريض؟'))return;
-  patients=patients.filter(x=>x.id!==id);showToast('تم حذف المريض');renderAll();
+  await sb.from('patients').delete().eq('id',id);
+  showToast('تم حذف المريض');
+  await loadAll();renderAll();
 }
-function deleteSupply(id){if(!confirm('حذف سجل الرفد؟'))return;supplies=supplies.filter(s=>s.id!==id);showToast('تم الحذف');renderAll();}
+async function deleteSupply(id){
+  if(!confirm('حذف سجل الرفد؟'))return;
+  await sb.from('supplies').delete().eq('id',id);
+  showToast('تم الحذف');
+  await loadAll();renderAll();
+}
 
 function renderAll(){
   renderDash();renderInv();renderDisp();renderPatients();renderSupply();renderHistory();renderReport();renderAlerts();
@@ -991,11 +1057,6 @@ function buildLoginScreen(){
 
     <div id="loginForm" style="display:none;background:rgba(255,255,255,0.07);border:0.5px solid rgba(255,255,255,0.15);border-radius:16px;padding:24px;width:100%;max-width:340px;box-shadow:0 8px 32px rgba(0,0,0,0.3);">
       <div id="selRoleLabel" style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:12px;border-bottom:0.5px solid rgba(255,255,255,0.1);"></div>
-      <div style="margin-bottom:11px;">
-        <label style="font-size:11.5px;color:rgba(255,255,255,0.6);display:block;margin-bottom:4px;">اسم المستخدم</label>
-        <input id="loginUser" type="text" placeholder="username"
-          style="width:100%;padding:10px 13px;border-radius:9px;border:0.5px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.08);color:#fff;font-family:'Cairo',sans-serif;font-size:13px;">
-      </div>
       <div style="margin-bottom:14px;">
         <label style="font-size:11.5px;color:rgba(255,255,255,0.6);display:block;margin-bottom:4px;">كلمة المرور</label>
         <input id="loginPass" type="password" placeholder="password"
@@ -1007,9 +1068,6 @@ function buildLoginScreen(){
       <button onclick="doLogin()" style="width:100%;padding:11px;background:linear-gradient(135deg,#1D9E75,#0F6E56);color:#fff;border:none;border-radius:9px;font-family:'Cairo',sans-serif;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(15,110,86,0.4);">
         <i class="ti ti-login" style="margin-left:5px;"></i>دخول
       </button>
-      <div style="margin-top:9px;text-align:center;">
-        <span style="font-size:10.5px;color:rgba(255,255,255,0.3);">مستخدم: <span id="hU" style="color:rgba(255,255,255,0.6)"></span> · كلمة المرور: <span id="hP" style="color:rgba(255,255,255,0.6)"></span></span>
-      </div>
       <button onclick="backToRoles()" style="width:100%;margin-top:8px;padding:8px;background:transparent;color:rgba(255,255,255,0.4);border:0.5px solid rgba(255,255,255,0.13);border-radius:8px;font-family:'Cairo',sans-serif;font-size:12px;cursor:pointer;">
         <i class="ti ti-arrow-right" style="margin-left:4px;"></i>رجوع لاختيار الحساب
       </button>
@@ -1070,11 +1128,8 @@ function selectRole(uid){
   }
 
   document.getElementById('loginForm').style.display='block';
-  document.getElementById('loginUser').value='';
   document.getElementById('loginPass').value='';
   document.getElementById('loginErr').style.display='none';
-  document.getElementById('hU').textContent=u.username;
-  document.getElementById('hP').textContent=u.password;
   const ico3dColor={admin:'navy',doctor:'blue',pharmacist:'teal',staff:'amber'};
   const ico3dMap={admin:'ti-shield-check',doctor:'ti-stethoscope',pharmacist:'ti-pill',staff:'ti-package'};
   document.getElementById('selRoleLabel').innerHTML=`
@@ -1087,24 +1142,26 @@ function selectRole(uid){
       <div style="font-size:13.5px;font-weight:700;color:#fff;">${u.name}</div>
       <div style="font-size:11px;color:rgba(255,255,255,0.5);">${u.roleLabel}${u.spec?' · '+u.spec:''}</div>
     </div>`;
-  setTimeout(()=>document.getElementById('loginUser').focus(),80);
+  setTimeout(()=>document.getElementById('loginPass').focus(),80);
 }
 
-function doLogin(){
-  if(!selectedUserId){showLoginErr('اختر نوع الحساب');return;}
+async function doLogin(){
+  if(!selectedUserId){showLoginErr('اختر الحساب أولاً');return;}
   const u=USERS.find(x=>x.id===selectedUserId);
   if(!u){showLoginErr('المستخدم غير موجود');return;}
-  if(document.getElementById('loginUser').value.trim()!==u.username||document.getElementById('loginPass').value!==u.password){
-    document.getElementById('loginErr').style.display='block';return;
-  }
+  const password=document.getElementById('loginPass').value;
+  if(!password){showLoginErr('أدخل كلمة المرور');return;}
+  const{error}=await sb.auth.signInWithPassword({email:u.email,password});
+  if(error){showLoginErr('كلمة المرور غير صحيحة');return;}
   currentUser=u;
+  await loadAll();
   document.getElementById('loginOverlay').style.display='none';
   document.getElementById('mainApp').style.display='block';
   applyPermissions(u);
   document.getElementById('docBadgeText').textContent=u.name;
   document.getElementById('docBadge').style.background=u.color;
   showToast(`مرحباً ${u.name}`);
-  if(u.role==='settings'||u.role==='admin'){document.getElementById('setDocName').value=u.name;document.getElementById('setDocSpec').value=u.spec||'';}
+  if(u.role==='admin'){document.getElementById('setDocName').value=u.name;document.getElementById('setDocSpec').value=u.spec||'';document.getElementById('setDocDept').value=u.dept||'';}
   renderAll();
 }
 function showLoginErr(msg){const el=document.getElementById('loginErr');if(el){el.textContent=msg;el.style.display='block';}}
@@ -1122,7 +1179,8 @@ function applyPermissions(u){
   if(firstTab)switchTab(firstTab[0]);
 }
 
-function logout(){
+async function logout(){
+  await sb.auth.signOut();
   currentUser=null;selectedUserId=null;
   document.getElementById('mainApp').style.display='none';
   document.getElementById('loginOverlay').style.display='block';
@@ -1131,7 +1189,45 @@ function logout(){
 
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&!currentUser)doLogin();});
 
-buildLoginScreen();
+/* ===== REALTIME SYNC ===== */
+function setupRealtime(){
+  const onDataChange=()=>{if(currentUser)loadAll().then(renderAll);};
+  sb.channel('app-changes')
+    .on('postgres_changes',{event:'*',schema:'public',table:'drugs'},onDataChange)
+    .on('postgres_changes',{event:'*',schema:'public',table:'patients'},onDataChange)
+    .on('postgres_changes',{event:'*',schema:'public',table:'reservations'},onDataChange)
+    .on('postgres_changes',{event:'*',schema:'public',table:'supplies'},onDataChange)
+    .on('postgres_changes',{event:'*',schema:'public',table:'history'},onDataChange)
+    .on('postgres_changes',{event:'*',schema:'public',table:'profiles'},()=>{
+      loadProfiles().then(()=>{if(currentUser)renderAll();else buildLoginScreen();});
+    })
+    .subscribe();
+}
+
+/* ===== BOOTSTRAP ===== */
+async function init(){
+  await loadProfiles();
+  const{data:{session}}=await sb.auth.getSession();
+  if(session){
+    const{data:prof}=await sb.from('profiles').select('*').eq('id',session.user.id).single();
+    if(prof){
+      currentUser=mapProfile(prof);
+      await loadAll();
+      document.getElementById('loginOverlay').style.display='none';
+      document.getElementById('mainApp').style.display='block';
+      applyPermissions(currentUser);
+      document.getElementById('docBadgeText').textContent=currentUser.name;
+      document.getElementById('docBadge').style.background=currentUser.color;
+      renderAll();
+    }else{
+      buildLoginScreen();
+    }
+  }else{
+    buildLoginScreen();
+  }
+  setupRealtime();
+}
+init();
 </script>
 </body>
 </html>
