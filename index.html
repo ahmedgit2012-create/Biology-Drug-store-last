@@ -505,7 +505,7 @@ function status(d){
   if(p<=30)return{l:"منخفض",c:"bdg-w",fc:"pf-w",p};
   return{l:"متاح",c:"bdg-ok",fc:"pf-ok",p};
 }
-function daysLeft(exp){return Math.round((new Date(exp)-new Date())/86400000);}
+function daysLeft(exp){return exp?Math.round((new Date(exp)-new Date())/86400000):null;}
 function today(){return new Date().toLocaleDateString('ar-IQ');}
 function showToast(msg,err){
   const t=document.getElementById('toast');
@@ -547,8 +547,8 @@ function getAlerts(){
     const r=rem(d),days=daysLeft(d.expiry);
     if(r<=0)al.push({type:'danger',msg:`<strong>${d.name}</strong> — نفدت الكمية`});
     else if(r<=d.minAlert)al.push({type:'danger',msg:`<strong>${d.name}</strong> — مخزون حرج: ${r} جرعة`});
-    if(days<0)al.push({type:'danger',msg:`<strong>${d.name}</strong> — انتهت الصلاحية: ${d.expiry}`});
-    else if(days<90)al.push({type:'warn',msg:`<strong>${d.name}</strong> — ينتهي خلال ${days} يوم`});
+    if(days!==null&&days<0)al.push({type:'danger',msg:`<strong>${d.name}</strong> — انتهت الصلاحية: ${d.expiry}`});
+    else if(days!==null&&days<90)al.push({type:'warn',msg:`<strong>${d.name}</strong> — ينتهي خلال ${days} يوم`});
   });
   return al;
 }
@@ -570,7 +570,7 @@ function renderDash(){
   document.getElementById('dashAlerts').innerHTML=al.slice(0,4).map(a=>`<div class="alert-item ${a.type}"><i class="ti ti-${a.type==='danger'?'alert-circle':'alert-triangle'}"></i><span class="alert-txt">${a.msg}</span></div>`).join('');
   document.getElementById('dashTable').innerHTML=drugs.map(d=>{
     const r=rem(d),st=status(d),days=daysLeft(d.expiry);
-    const expC=days<0?'bdg-r':days<90?'bdg-w':'bdg-ok';
+    const expC=days===null?'bdg-ok':days<0?'bdg-r':days<90?'bdg-w':'bdg-ok';
     return`<tr><td><div class="dn">${d.name}</div><div class="dc">${d.brand}</div></td><td><span class="bdg bdg-b">${d.cat}</span></td><td style="text-align:center">${d.dispensed}</td><td style="text-align:center"><span class="bdg bdg-p">${d.reserved}</span></td><td style="text-align:center;font-weight:700;color:${r<=d.minAlert?'var(--red)':'var(--teal)'}">${r}</td><td><span class="bdg ${expC}">${d.expiry}</span></td><td><span class="bdg ${st.c}">${st.l}</span></td><td><div class="pb"><div class="pf ${st.fc}" style="width:${st.p}%"></div></div></td></tr>`;
   }).join('');
   const b=document.getElementById('docBanner');
@@ -590,7 +590,7 @@ function renderInv(){
   const canDel=currentUser&&(currentUser.role==='admin');
   document.getElementById('invTable').innerHTML=list.length?list.map(d=>{
     const r=rem(d),st=status(d),days=daysLeft(d.expiry);
-    const expC=days<0?'bdg-r':days<90?'bdg-w':'bdg-ok';
+    const expC=days===null?'bdg-ok':days<0?'bdg-r':days<90?'bdg-w':'bdg-ok';
     return`<tr><td><div class="dn">${d.name}</div></td><td>${d.brand}</td><td><span class="bdg bdg-b">${d.cat}</span></td><td style="text-align:center">${d.total}</td><td style="text-align:center">${d.dispensed}</td><td style="text-align:center"><span class="bdg bdg-p">${d.reserved}</span></td><td style="text-align:center;font-weight:700;color:${r<=d.minAlert?'var(--red)':'var(--teal)'}">${r}</td><td><span class="bdg ${expC}">${d.expiry}</span></td><td><span class="bdg ${st.c}">${st.l}</span></td><td>${canDel?`<button class="btn btn-d btn-sm" onclick="deleteDrug(${d.id})"><i class="ti ti-trash"></i></button>`:'—'}</td></tr>`;
   }).join(''):`<tr><td colspan="10" class="empty">لا توجد أدوية</td></tr>`;
 }
@@ -816,7 +816,7 @@ async function adminTransferPatient(pid){
 /* ===== SUPPLY, HISTORY, REPORT, ALERTS ===== */
 function renderSupply(){
   document.getElementById('supplyList').innerHTML=supplies.length?supplies.map(s=>{
-    const days=daysLeft(s.expiry),expC=days<0?'danger':days<90?'warn':'';
+    const days=daysLeft(s.expiry),expC=days===null?'':days<0?'danger':days<90?'warn':'';
     return`<div class="si-card"><div class="si-ico"><i class="ti ti-truck-delivery"></i></div>
       <div class="si-info"><div class="si-drug">${s.drug}</div><div class="si-meta">${s.supplier} · ${s.batch||'—'} · <strong>${s.qty}</strong> جرعة${s.note?' · '+s.note:''}</div></div>
       <div class="si-dates">
