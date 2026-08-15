@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>حجز مرضى النواظير | مستشفى الجهاز الهضمي والكبد - النجف الأشرف</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=El+Messiri:wght@500;600;700&family=Tajawal:wght@400;500;700;900&display=swap');
+
+:root{
+  --bg:#EEF3F1;
+  --panel:#FFFFFF;
+  --ink:#16232A;
+  --ink-soft:#5B6B6D;
+  --teal:#0E5C56;
+  --teal-dark:#0A423E;
+  --teal-soft:#DCEDE9;
+  --gold:#B9862B;
+  --gold-soft:#F3E6C8;
+  --red:#B3413A;
+  --red-soft:#F6DEDB;
+  --green:#2E7D5B;
+  --line:#D9E1DE;
+  --shadow: 0 8px 24px rgba(14,60,55,0.08);
+}
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:'Tajawal',sans-serif;
+  min-height:100vh;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:20px 20px 60px;}
+
+header.top{
+  background:linear-gradient(135deg,var(--teal-dark),var(--teal) 70%);
+  border-radius:20px;
+  padding:26px 30px;
+  color:#fff;
+  box-shadow:var(--shadow);
+  position:relative;
+  overflow:hidden;
+  margin-bottom:22px;
+}
+header.top::after{
+  content:"";
+  position:absolute;
+  left:-60px; top:-60px;
+  width:220px;height:220px;
+  border-radius:50%;
+  border:2px solid rgba(255,255,255,0.12);
+}
+header.top::before{
+  content:"";
+  position:absolute;
+  left:20px; top:60px;
+  width:90px;height:90px;
+  border-radius:50%;
+  border:2px solid rgba(212,168,88,0.35);
+}
+header.top h1{
+  font-family:'El Messiri',serif;
+  font-size:26px;
+  margin:0 0 4px;
+  font-weight:700;
+}
+header.top p{
+  margin:0;
+  color:var(--gold-soft);
+  font-size:14.5px;
+  font-weight:500;
+}
+.date-badge{
+  position:absolute;
+  left:26px; top:26px;
+  background:rgba(255,255,255,0.12);
+  border:1px solid rgba(255,255,255,0.25);
+  border-radius:10px;
+  padding:8px 14px;
+  font-size:13px;
+  text-align:center;
+}
+.conn-badge{
+  position:absolute;
+  left:26px; bottom:16px;
+  font-size:11px;
+  padding:4px 10px;
+  border-radius:20px;
+  background:rgba(255,255,255,0.12);
+}
+.conn-badge.err{background:rgba(179,65,58,0.4);}
+
+.date-nav{
+  background:var(--panel);
+  border-radius:16px;
+  padding:16px 18px;
+  box-shadow:var(--shadow);
+  border:1px solid var(--line);
+  margin-bottom:16px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  flex-wrap:wrap;
+}
+.date-nav .nav-btn{
+  background:var(--teal-soft);
+  color:var(--teal-dark);
+  border:none;
+  width:36px;height:36px;
+  border-radius:10px;
+  font-size:16px;
+  font-weight:900;
+  cursor:pointer;
+}
+.date-nav .nav-btn:hover{background:var(--teal);color:#fff;}
+.date-nav input[type=date]{
+  padding:9px 12px;
+  border-radius:10px;
+  border:1.5px solid var(--line);
+  font-family:'Tajawal',sans-serif;
+  font-size:14px;
+  background:#FBFCFC;
+}
+.date-nav .cur-label{
+  font-family:'El Messiri',serif;
+  font-weight:700;
+  font-size:16.5px;
+  color:var(--teal-dark);
+  flex:1;
+  min-width:160px;
+}
+.date-nav .cur-label small{
+  display:block;
+  font-family:'Tajawal',sans-serif;
+  font-weight:500;
+  font-size:12px;
+  color:var(--ink-soft);
+}
+
+.day-tabs{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-bottom:20px;
+}
+.day-tab{
+  flex:1 1 140px;
+  background:var(--panel);
+  border:1.5px solid var(--line);
+  border-radius:14px;
+  padding:12px 10px;
+  cursor:pointer;
+  text-align:center;
+  transition:all .15s ease;
+}
+.day-tab:hover{border-color:var(--teal);}
+.day-tab.active{
+  background:var(--teal);
+  border-color:var(--teal);
+  color:#fff;
+  box-shadow:var(--shadow);
+  transform:translateY(-2px);
+}
+.day-tab .d-name{
+  font-family:'El Messiri',serif;
+  font-weight:700;
+  font-size:16.5px;
+}
+.day-tab .d-doc{
+  font-size:11.5px;
+  margin-top:3px;
+  opacity:.85;
+  line-height:1.4;
+}
+.day-tab .d-count{
+  font-size:11px;
+  margin-top:6px;
+  font-weight:700;
+  display:inline-block;
+  padding:2px 9px;
+  border-radius:20px;
+  background:var(--teal-soft);
+  color:var(--teal-dark);
+}
+.day-tab.active .d-count{
+  background:rgba(255,255,255,0.2);
+  color:#fff;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns: 1fr 1.35fr;
+  gap:20px;
+}
+@media (max-width:880px){
+  .grid{grid-template-columns:1fr;}
+}
+.panel{
+  background:var(--panel);
+  border-radius:18px;
+  padding:22px;
+  box-shadow:var(--shadow);
+  border:1px solid var(--line);
+}
+.panel h2{
+  font-family:'El Messiri',serif;
+  font-size:19px;
+  margin:0 0 16px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  color:var(--teal-dark);
+}
+
+.field{margin-bottom:14px;}
+.field label{
+  display:block;
+  font-size:13px;
+  font-weight:700;
+  color:var(--ink-soft);
+  margin-bottom:6px;
+}
+.field input,.field select{
+  width:100%;
+  padding:11px 12px;
+  border-radius:10px;
+  border:1.5px solid var(--line);
+  font-family:'Tajawal',sans-serif;
+  font-size:14.5px;
+  background:#FBFCFC;
+  color:var(--ink);
+  transition:border-color .15s;
+}
+.field input:focus,.field select:focus{
+  outline:none;
+  border-color:var(--teal);
+  background:#fff;
+}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+.seg{
+  display:flex;
+  gap:8px;
+  margin-top:4px;
+}
+.seg button{
+  flex:1;
+  padding:10px 8px;
+  border-radius:10px;
+  border:1.5px solid var(--line);
+  background:#FBFCFC;
+  font-family:'Tajawal',sans-serif;
+  font-size:13.5px;
+  font-weight:700;
+  cursor:pointer;
+  color:var(--ink-soft);
+  transition:all .15s;
+}
+.seg button.sel{
+  border-color:var(--teal);
+  background:var(--teal-soft);
+  color:var(--teal-dark);
+}
+.seg button:disabled{
+  opacity:.45;
+  cursor:not-allowed;
+}
+
+.polyp-row{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  background:var(--gold-soft);
+  border:1px solid #E4CE97;
+  border-radius:10px;
+  padding:10px 12px;
+  margin-top:10px;
+}
+.polyp-row input{width:auto;}
+.polyp-row label{margin:0;font-size:13.5px;color:#7A5A15;font-weight:700;}
+
+.edit-banner{
+  display:none;
+  align-items:center;
+  justify-content:space-between;
+  background:var(--gold-soft);
+  border:1px solid #E4CE97;
+  color:#7A5A15;
+  border-radius:10px;
+  padding:9px 12px;
+  font-size:13px;
+  font-weight:700;
+  margin-bottom:14px;
+}
+.edit-banner button{
+  background:none;
+  border:none;
+  color:#7A5A15;
+  text-decoration:underline;
+  cursor:pointer;
+  font-weight:700;
+  font-size:13px;
+}
+
+.submit-btn{
+  width:100%;
+  padding:13px;
+  border:none;
+  border-radius:12px;
+  background:var(--teal);
+  color:#fff;
+  font-family:'Tajawal',sans-serif;
+  font-weight:900;
+  font-size:15px;
+  cursor:pointer;
+  margin-top:6px;
+  transition:background .15s;
+}
+.submit-btn:hover{background:var(--teal-dark);}
+.submit-btn:disabled{background:#9BAFAC;cursor:not-allowed;}
+
+.err-msg{
+  background:var(--red-soft);
+  color:var(--red);
+  border:1px solid #E3B7B1;
+  border-radius:10px;
+  padding:10px 12px;
+  font-size:13.5px;
+  font-weight:700;
+  margin-top:10px;
+  display:none;
+}
+.ok-msg{
+  background:#DFF1E7;
+  color:var(--green);
+  border:1px solid #B7DCC5;
+  border-radius:10px;
+  padding:10px 12px;
+  font-size:13.5px;
+  font-weight:700;
+  margin-top:10px;
+  display:none;
+}
+
+.doctors-box{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-bottom:18px;
+}
+.doc-chip{
+  background:var(--teal-soft);
+  color:var(--teal-dark);
+  padding:7px 14px;
+  border-radius:20px;
+  font-size:13.5px;
+  font-weight:700;
+}
+.closed-note{
+  color:var(--red);
+  font-weight:700;
+  font-size:14px;
+  background:var(--red-soft);
+  padding:10px 14px;
+  border-radius:10px;
+  display:inline-block;
+}
+
+.gauges{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
+  margin-bottom:20px;
+}
+@media (max-width:560px){.gauges{grid-template-columns:repeat(2,1fr);}}
+.gauge-card{
+  background:#0E2E2C;
+  border-radius:14px;
+  padding:14px 8px;
+  text-align:center;
+  position:relative;
+  overflow:hidden;
+}
+.gauge-card::after{
+  content:"";
+  position:absolute;
+  width:36px;height:18px;
+  background:rgba(255,255,255,0.08);
+  border-radius:50%;
+  top:10px;left:18px;
+  transform:rotate(-25deg);
+}
+.gauge-card svg{display:block;margin:0 auto;}
+.gauge-label{
+  color:#BFE3DA;
+  font-size:11.5px;
+  font-weight:700;
+  margin-top:6px;
+}
+.gauge-val{
+  fill:#fff;
+  font-family:'Tajawal',sans-serif;
+  font-weight:900;
+}
+
+.ward-strip{
+  display:flex;
+  gap:10px;
+  margin-bottom:20px;
+}
+.ward-box{
+  flex:1;
+  border-radius:12px;
+  padding:12px 14px;
+  border:1.5px solid var(--line);
+  background:#FBFCFC;
+}
+.ward-box.full{border-color:var(--red);background:var(--red-soft);}
+.ward-box .wt{font-size:12.5px;font-weight:700;color:var(--ink-soft);}
+.ward-box .wv{font-family:'El Messiri',serif;font-size:20px;font-weight:700;color:var(--teal-dark);margin-top:2px;}
+.ward-box.full .wv{color:var(--red);}
+.ward-box .wo{font-size:11px;color:var(--ink-soft);margin-top:2px;}
+
+table.plist{
+  width:100%;
+  border-collapse:collapse;
+  font-size:12.5px;
+}
+table.plist th{
+  text-align:right;
+  padding:9px 7px;
+  border-bottom:2px solid var(--line);
+  color:var(--ink-soft);
+  font-size:11px;
+  font-weight:700;
+  white-space:nowrap;
+}
+table.plist td{
+  padding:9px 7px;
+  border-bottom:1px solid var(--line);
+  vertical-align:middle;
+  white-space:nowrap;
+}
+table.plist tr:last-child td{border-bottom:none;}
+.tag{
+  display:inline-block;
+  padding:2px 8px;
+  border-radius:20px;
+  font-size:10.5px;
+  font-weight:700;
+}
+.tag.gastro{background:var(--teal-soft);color:var(--teal-dark);}
+.tag.colon{background:var(--gold-soft);color:#7A5A15;}
+.tag.original{background:#DFF1E7;color:var(--green);}
+.tag.reserve{background:#FCE9DC;color:#9B5B1E;}
+.time-cell{font-weight:900;color:var(--teal-dark);}
+.act-btn{
+  background:none;
+  border:none;
+  cursor:pointer;
+  font-size:14px;
+  margin-inline-start:6px;
+}
+.act-btn.del{color:var(--red);}
+.act-btn.edit{color:var(--teal);}
+.empty-note{
+  text-align:center;
+  color:var(--ink-soft);
+  padding:26px 0;
+  font-size:14px;
+}
+.foot-note{
+  text-align:center;
+  color:var(--ink-soft);
+  font-size:11.5px;
+  margin-top:22px;
+  line-height:1.7;
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="date-badge" id="clockBadge">--</div>
+    <div class="conn-badge" id="connBadge">جارٍ الاتصال بقاعدة البيانات...</div>
+    <h1>مستشفى الجهاز الهضمي والكبد</h1>
+    <p>النجف الأشرف — نظام حجز مرضى النواظير (المنظار العلوي والسفلي)</p>
+  </header>
+
+  <div class="date-nav">
+    <button class="nav-btn" id="prevDayBtn" title="اليوم السابق">›</button>
+    <div class="cur-label" id="curLabel">--<small>--</small></div>
+    <input type="date" id="datePicker">
+    <button class="nav-btn" id="nextDayBtn" title="اليوم التالي">‹</button>
+  </div>
+
+  <div class="day-tabs" id="dayTabs"></div>
+
+  <div class="grid">
+    <div class="panel">
+      <h2>📋 بيانات حجز جديد</h2>
+
+      <div class="edit-banner" id="editBanner">
+        <span>وضع تعديل حجز موجود</span>
+        <button type="button" id="cancelEditBtn">إلغاء التعديل</button>
+      </div>
+
+      <form id="bookForm">
+        <div class="field">
+          <label>اسم المريض</label>
+          <input type="text" id="p_name" placeholder="الاسم الثلاثي" required>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label>العمر</label>
+            <input type="number" id="p_age" min="0" max="120" placeholder="بالسنوات" required>
+          </div>
+          <div class="field">
+            <label>رقم الهاتف</label>
+            <input type="tel" id="p_phone" placeholder="07xxxxxxxxx" required>
+          </div>
+        </div>
+        <div class="field">
+          <label>محافظة السكن</label>
+          <select id="p_gov" required></select>
+        </div>
+
+        <div class="row2">
+          <div class="field">
+            <label>تاريخ الحجز</label>
+            <input type="date" id="p_date" required>
+          </div>
+          <div class="field">
+            <label>وقت الحجز</label>
+            <input type="time" id="p_time" required>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>نوع المنظار</label>
+          <div class="seg" id="segProcedure">
+            <button type="button" data-val="gastro" class="sel">منظار المعدة</button>
+            <button type="button" data-val="colon">منظار القولون</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>حالة الحجز</label>
+          <div class="seg" id="segStatus">
+            <button type="button" data-val="original" class="sel">أصلي</button>
+            <button type="button" data-val="reserve">احتياط</button>
+          </div>
+        </div>
+
+        <div id="polypWrap" style="display:none;">
+          <div class="polyp-row">
+            <input type="checkbox" id="p_polyp">
+            <label for="p_polyp">رفع زوائد لحمية (يُحتسب ضمن العدد الكلي لمرضى القولون)</label>
+          </div>
+        </div>
+
+        <div class="field" style="margin-top:14px;">
+          <label>الجناح (تحت التخدير العام)</label>
+          <div class="seg" id="segWard">
+            <button type="button" data-val="general" class="sel">الجناح العام</button>
+            <button type="button" data-val="private">الجناح الخاص</button>
+          </div>
+        </div>
+
+        <button type="submit" class="submit-btn" id="submitBtn">تأكيد الحجز</button>
+        <div class="err-msg" id="errMsg"></div>
+        <div class="ok-msg" id="okMsg">تم تسجيل الحجز بنجاح ✓</div>
+      </form>
+    </div>
+
+    <div class="panel">
+      <h2 id="dayTitle">📅 جدول اليوم</h2>
+      <div class="doctors-box" id="doctorsBox"></div>
+
+      <div class="gauges" id="gauges"></div>
+      <div class="ward-strip" id="wardStrip"></div>
+
+      <h2 style="margin-top:6px;">🩺 قائمة المرضى المحجوزين</h2>
+      <div style="overflow-x:auto;">
+        <table class="plist">
+          <thead>
+            <tr>
+              <th>الوقت</th>
+              <th>الاسم</th>
+              <th>العمر</th>
+              <th>المحافظة</th>
+              <th>الهاتف</th>
+              <th>المنظار</th>
+              <th>الحالة</th>
+              <th>الجناح</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="plistBody"></tbody>
+        </table>
+        <div class="empty-note" id="emptyNote" style="display:none;">لا يوجد مرضى محجوزون لهذا اليوم بعد</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot-note">
+    السعة اليومية الكلية: ٢٠ مريضاً — منظار المعدة ١٢ (٨ أصلاء + ٤ احتياط) · منظار القولون ٨ (٤ أصلاء + ٤ احتياط) · الجناح العام تحت التخدير العام: ٣ فقط، والجناح الخاص مفتوح.<br>
+    يمكن تغيير تاريخ ووقت أي حجز لاحقاً بالضغط على أيقونة التعديل ✎ في القائمة. هذه البيانات محفوظة في قاعدة بيانات حقيقية ومشتركة بين كل من يفتح هذا الرابط.
+  </div>
+</div>
+
+<script>
+const DAYS = [
+  { key:'sat', label:'السبت',    doctors:['د. أحمد جاسم الكوفي'],              dow:6 },
+  { key:'sun', label:'الأحد',    doctors:['د. ياسر صلاح','د. محمود الكندي'],   dow:0 },
+  { key:'mon', label:'الاثنين',  doctors:['د. يعقوب الكوفي'],                  dow:1 },
+  { key:'tue', label:'الثلاثاء', doctors:['د. علي ناجي النجم'],                dow:2 },
+  { key:'wed', label:'الأربعاء', doctors:['د. عبد الإله العابدي','د. سامر الفتلاوي'], dow:3 },
+  { key:'thu', label:'الخميس',   doctors:['د. مسلم الخفاجي'],                  dow:4 }
+];
+const FRIDAY_DOW = 5;
+
+const GOVERNORATES = ['النجف الأشرف','بغداد','البصرة','نينوى','أربيل','كربلاء','بابل','ديالى','الأنبار',
+  'ذي قار','ميسان','واسط','صلاح الدين','كركوك','القادسية','المثنى','دهوك','السليمانية'];
+
+const LIMITS = { gastro_original:8, gastro_reserve:4, colon_original:4, colon_reserve:4, ward_general:3 };
+const TOTAL_LIMIT = 20;
+
+let selectedDate = ymd(new Date());
+let currentList = [];
+let tabCounts = {};
+let selProcedure = 'gastro';
+let selStatus = 'original';
+let selWard = 'general';
+let editingId = null;
+let editingOrigDate = null;
+
+// ---------- date helpers ----------
+function ymd(d){
+  const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), dd=String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${dd}`;
+}
+function dateFromYmd(s){
+  const [y,m,d] = s.split('-').map(Number);
+  return new Date(y, m-1, d);
+}
+function dayMeta(dateStr){
+  const d = dateFromYmd(dateStr);
+  const dow = d.getDay();
+  if(dow===FRIDAY_DOW) return { closed:true, label:'الجمعة', doctors:[] };
+  const info = DAYS.find(x=>x.dow===dow);
+  return { closed:false, label:info.label, doctors:info.doctors, key:info.key };
+}
+function nextDateForDow(targetDow){
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  for(let i=0;i<14;i++){
+    const cand = new Date(today);
+    cand.setDate(today.getDate()+i);
+    if(cand.getDay()===targetDow) return ymd(cand);
+  }
+  return ymd(today);
+}
+function shiftDate(dateStr, delta){
+  const d = dateFromYmd(dateStr);
+  d.setDate(d.getDate()+delta);
+  return ymd(d);
+}
+function fmtDateHuman(dateStr){
+  const d = dateFromYmd(dateStr);
+  return d.toLocaleDateString('ar-IQ', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+}
+
+// ---------- API client ----------
+const API = '/api';
+async function apiGetBookings(date){
+  const r = await fetch(`${API}/bookings?date=${date}`);
+  if(!r.ok) throw new Error('فشل تحميل الحجوزات');
+  return r.json();
+}
+async function apiGetCounts(dates){
+  const r = await fetch(`${API}/bookings/counts?dates=${dates.join(',')}`);
+  if(!r.ok) throw new Error('فشل تحميل الأعداد');
+  return r.json();
+}
+async function apiCreate(payload){
+  const r = await fetch(`${API}/bookings`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+  const data = await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(data.error || 'تعذّر حفظ الحجز');
+  return data;
+}
+async function apiUpdate(id, payload){
+  const r = await fetch(`${API}/bookings/${id}`, { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+  const data = await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(data.error || 'تعذّر حفظ التعديل');
+  return data;
+}
+async function apiDelete(id){
+  const r = await fetch(`${API}/bookings/${id}`, { method:'DELETE' });
+  if(!r.ok) throw new Error('تعذّر الحذف');
+  return r.json();
+}
+async function checkConnection(){
+  const badge = document.getElementById('connBadge');
+  try{
+    const r = await fetch(`${API}/health`);
+    if(r.ok){ badge.textContent = '● متصل بقاعدة البيانات'; badge.classList.remove('err'); }
+    else throw new Error();
+  }catch(e){
+    badge.textContent = '● تعذّر الاتصال بقاعدة البيانات'; badge.classList.add('err');
+  }
+}
+
+// ---------- helpers ----------
+function computeCounts(list, excludeId){
+  const c = { gastro_original:0, gastro_reserve:0, colon_original:0, colon_reserve:0, colon_polyp:0, ward_general:0, ward_private:0, total:0 };
+  list.forEach(p=>{
+    if(excludeId && p.id===excludeId) return;
+    c.total++;
+    if(p.procedure==='gastro'){ c[p.status==='original'?'gastro_original':'gastro_reserve']++; }
+    else { c[p.status==='original'?'colon_original':'colon_reserve']++; if(p.polyp) c.colon_polyp++; }
+    if(p.ward==='general') c.ward_general++; else c.ward_private++;
+  });
+  return c;
+}
+function gaugeSvg(value,max,color){
+  const r = 30, cx=40, cy=40, C = 2*Math.PI*r;
+  const pct = Math.min(value/max,1);
+  const offset = C*(1-pct);
+  return `<svg width="80" height="80" viewBox="0 0 80 80">
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="7"/>
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="7"
+      stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${offset}"
+      transform="rotate(-90 ${cx} ${cy})"/>
+    <text x="40" y="36" text-anchor="middle" class="gauge-val" font-size="17">${value}</text>
+    <text x="40" y="52" text-anchor="middle" class="gauge-val" font-size="10" fill="#8FB6AC">من ${max}</text>
+  </svg>`;
+}
+function fmtProcedure(p){ return p==='gastro' ? 'المعدة' : 'القولون'; }
+function fmtStatus(s){ return s==='original' ? 'أصلي' : 'احتياط'; }
+function fmtWard(w){ return w==='general' ? 'عام' : 'خاص'; }
+
+// ---------- render ----------
+function renderDateNav(){
+  document.getElementById('datePicker').value = selectedDate;
+  const meta = dayMeta(selectedDate);
+  document.getElementById('curLabel').innerHTML = `${meta.label} <small>${fmtDateHuman(selectedDate)}</small>`;
+}
+function renderDayTabs(){
+  const box = document.getElementById('dayTabs');
+  box.innerHTML = DAYS.map(d=>{
+    const active = dayMeta(selectedDate).key===d.key ? 'active' : '';
+    const targetDate = active ? selectedDate : nextDateForDow(d.dow);
+    const count = tabCounts[targetDate] ?? 0;
+    return `<div class="day-tab ${active}" data-dow="${d.dow}">
+      <div class="d-name">${d.label}</div>
+      <div class="d-doc">${d.doctors.join(' · ')}</div>
+      <div class="d-count">${count}/${TOTAL_LIMIT}</div>
+    </div>`;
+  }).join('');
+  box.querySelectorAll('.day-tab').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      const dow = Number(el.dataset.dow);
+      selectedDate = nextDateForDow(dow);
+      cancelEdit();
+      renderAll();
+    });
+  });
+}
+function renderDoctors(){
+  const meta = dayMeta(selectedDate);
+  document.getElementById('dayTitle').textContent = `📅 جدول يوم ${meta.label}`;
+  const box = document.getElementById('doctorsBox');
+  if(meta.closed){
+    box.innerHTML = `<span class="closed-note">العيادة مغلقة يوم الجمعة</span>`;
+  } else {
+    box.innerHTML = meta.doctors.map(doc=>`<span class="doc-chip">👨‍⚕️ ${doc}</span>`).join('');
+  }
+}
+function renderGauges(counts){
+  const items = [
+    { label:'منظار المعدة - أصلاء', val:counts.gastro_original, max:LIMITS.gastro_original, color:'#3FA88C' },
+    { label:'منظار المعدة - احتياط', val:counts.gastro_reserve, max:LIMITS.gastro_reserve, color:'#E0A93F' },
+    { label:'منظار القولون - أصلاء', val:counts.colon_original, max:LIMITS.colon_original, color:'#3FA88C' },
+    { label:'منظار القولون - احتياط', val:counts.colon_reserve, max:LIMITS.colon_reserve, color:'#E0A93F' },
+    { label:'زوائد لحمية (ضمن القولون)', val:counts.colon_polyp, max:LIMITS.colon_original+LIMITS.colon_reserve, color:'#C97B5A' },
+    { label:'الإجمالي اليومي', val:counts.total, max:TOTAL_LIMIT, color:'#4EC0E9' }
+  ];
+  document.getElementById('gauges').innerHTML = items.map(it=>`
+    <div class="gauge-card">
+      ${gaugeSvg(it.val,it.max,it.color)}
+      <div class="gauge-label">${it.label}</div>
+    </div>
+  `).join('');
+}
+function renderWardStrip(counts){
+  const gFull = counts.ward_general >= LIMITS.ward_general;
+  document.getElementById('wardStrip').innerHTML = `
+    <div class="ward-box ${gFull?'full':''}">
+      <div class="wt">الجناح العام (تخدير عام)</div>
+      <div class="wv">${counts.ward_general} / ${LIMITS.ward_general}</div>
+      <div class="wo">${gFull?'مكتمل — الرجاء اختيار الجناح الخاص':'متاح'}</div>
+    </div>
+    <div class="ward-box">
+      <div class="wt">الجناح الخاص</div>
+      <div class="wv">${counts.ward_private}</div>
+      <div class="wo">سعة مفتوحة (بلا حد أقصى)</div>
+    </div>
+  `;
+}
+function renderTable(list){
+  const body = document.getElementById('plistBody');
+  const empty = document.getElementById('emptyNote');
+  if(list.length===0){
+    body.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+  const sorted = [...list].sort((a,b)=> (a.time||'').localeCompare(b.time||''));
+  body.innerHTML = sorted.map(p=>`
+    <tr>
+      <td class="time-cell">${p.time||'—'}</td>
+      <td>${p.name}${p.polyp?' <span class="tag colon">زوائد لحمية</span>':''}</td>
+      <td>${p.age}</td>
+      <td>${p.gov}</td>
+      <td>${p.phone}</td>
+      <td><span class="tag ${p.procedure}">${fmtProcedure(p.procedure)}</span></td>
+      <td><span class="tag ${p.status}">${fmtStatus(p.status)}</span></td>
+      <td>${fmtWard(p.ward)}</td>
+      <td>
+        <button class="act-btn edit" data-id="${p.id}" title="تعديل التاريخ/الوقت والبيانات">✎</button>
+        <button class="act-btn del" data-id="${p.id}" title="حذف">✕</button>
+      </td>
+    </tr>
+  `).join('');
+  body.querySelectorAll('.act-btn.del').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const id = btn.dataset.id;
+      try{
+        await apiDelete(id);
+        await renderAll();
+      }catch(e){
+        alert(e.message);
+      }
+    });
+  });
+  body.querySelectorAll('.act-btn.edit').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const id = btn.dataset.id;
+      const patient = currentList.find(p=>p.id===id);
+      if(patient) startEdit(patient);
+    });
+  });
+}
+function renderForm(counts){
+  document.querySelectorAll('#segProcedure button').forEach(b=>{
+    b.classList.toggle('sel', b.dataset.val===selProcedure);
+  });
+  document.querySelectorAll('#segStatus button').forEach(b=>{
+    b.classList.toggle('sel', b.dataset.val===selStatus);
+    const key = selProcedure + '_' + b.dataset.val;
+    b.disabled = counts[key] >= LIMITS[key];
+  });
+  document.querySelectorAll('#segWard button').forEach(b=>{
+    b.classList.toggle('sel', b.dataset.val===selWard);
+    if(b.dataset.val==='general'){
+      b.disabled = counts.ward_general >= LIMITS.ward_general;
+    }
+  });
+  document.getElementById('polypWrap').style.display = selProcedure==='colon' ? 'block' : 'none';
+
+  const meta = dayMeta(document.getElementById('p_date').value || selectedDate);
+  const dayFull = counts.total >= TOTAL_LIMIT;
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = dayFull || meta.closed;
+  if(editingId){
+    btn.textContent = 'حفظ التعديل';
+  } else {
+    btn.textContent = meta.closed ? 'العيادة مغلقة هذا اليوم' : (dayFull ? 'اليوم مكتمل (٢٠/٢٠)' : 'تأكيد الحجز');
+  }
+}
+
+async function renderAll(){
+  renderDateNav();
+  try{
+    currentList = await apiGetBookings(selectedDate);
+  }catch(e){
+    currentList = [];
+  }
+  const targetDates = DAYS.map(d => dayMeta(selectedDate).key===d.key ? selectedDate : nextDateForDow(d.dow));
+  try{
+    tabCounts = await apiGetCounts([...new Set(targetDates)]);
+  }catch(e){ tabCounts = {}; }
+  renderDayTabs();
+  renderDoctors();
+  const counts = computeCounts(currentList, editingId);
+  renderGauges(counts);
+  renderWardStrip(counts);
+  renderTable(currentList);
+  renderForm(counts);
+  if(!editingId){
+    document.getElementById('p_date').value = selectedDate;
+  }
+}
+
+// ---------- edit mode ----------
+function startEdit(patient){
+  editingId = patient.id;
+  editingOrigDate = patient.date;
+  document.getElementById('p_name').value = patient.name;
+  document.getElementById('p_age').value = patient.age;
+  document.getElementById('p_phone').value = patient.phone;
+  document.getElementById('p_gov').value = patient.gov;
+  document.getElementById('p_date').value = patient.date;
+  document.getElementById('p_time').value = patient.time;
+  document.getElementById('p_polyp').checked = !!patient.polyp;
+  selProcedure = patient.procedure;
+  selStatus = patient.status;
+  selWard = patient.ward;
+  document.getElementById('editBanner').style.display = 'flex';
+  document.getElementById('okMsg').style.display='none';
+  document.getElementById('errMsg').style.display='none';
+  const counts = computeCounts(currentList, patient.id);
+  renderForm(counts);
+  document.getElementById('bookForm').scrollIntoView({behavior:'smooth', block:'start'});
+}
+function cancelEdit(){
+  editingId = null;
+  editingOrigDate = null;
+  document.getElementById('editBanner').style.display = 'none';
+  document.getElementById('bookForm').reset();
+  selProcedure='gastro'; selStatus='original'; selWard='general';
+}
+document.getElementById('cancelEditBtn').addEventListener('click', async ()=>{ cancelEdit(); await renderAll(); });
+
+// ---------- form interactions ----------
+document.getElementById('segProcedure').addEventListener('click', e=>{
+  const btn = e.target.closest('button'); if(!btn) return;
+  selProcedure = btn.dataset.val;
+  if(!editingId) selStatus = 'original';
+  refreshFormOnly();
+});
+document.getElementById('segStatus').addEventListener('click', e=>{
+  const btn = e.target.closest('button'); if(!btn || btn.disabled) return;
+  selStatus = btn.dataset.val;
+  refreshFormOnly();
+});
+document.getElementById('segWard').addEventListener('click', e=>{
+  const btn = e.target.closest('button'); if(!btn || btn.disabled) return;
+  selWard = btn.dataset.val;
+  refreshFormOnly();
+});
+document.getElementById('p_date').addEventListener('change', async e=>{
+  if(!editingId){
+    selectedDate = e.target.value;
+    await renderAll();
+  } else {
+    try{
+      const list = await apiGetBookings(e.target.value);
+      const counts = computeCounts(list, editingId);
+      renderForm(counts);
+    }catch(err){}
+  }
+});
+function refreshFormOnly(){
+  const counts = computeCounts(currentList, editingId);
+  renderForm(counts);
+}
+
+document.getElementById('bookForm').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const errBox = document.getElementById('errMsg');
+  const okBox = document.getElementById('okMsg');
+  errBox.style.display='none'; okBox.style.display='none';
+
+  const name = document.getElementById('p_name').value.trim();
+  const age = document.getElementById('p_age').value;
+  const phone = document.getElementById('p_phone').value.trim();
+  const gov = document.getElementById('p_gov').value;
+  const date = document.getElementById('p_date').value;
+  const time = document.getElementById('p_time').value;
+  const polyp = selProcedure==='colon' && document.getElementById('p_polyp').checked;
+
+  if(!name || !age || !phone || !gov || !date || !time){
+    errBox.textContent = 'الرجاء تعبئة جميع الحقول المطلوبة، بما فيها التاريخ والوقت';
+    errBox.style.display='block';
+    return;
+  }
+  const meta = dayMeta(date);
+  if(meta.closed){
+    errBox.textContent = 'العيادة مغلقة يوم الجمعة، الرجاء اختيار تاريخ آخر';
+    errBox.style.display='block';
+    return;
+  }
+
+  const payload = { name, age:Number(age), gov, phone, date, time, procedure:selProcedure, status:selStatus, polyp, ward:selWard };
+
+  try{
+    if(editingId){
+      await apiUpdate(editingId, payload);
+      okBox.textContent = 'تم حفظ التعديل بنجاح ✓';
+      okBox.style.display='block';
+      selectedDate = date;
+      cancelEdit();
+    } else {
+      await apiCreate(payload);
+      okBox.textContent = 'تم تسجيل الحجز بنجاح ✓';
+      okBox.style.display='block';
+      document.getElementById('bookForm').reset();
+      document.getElementById('p_gov').value = gov;
+      selProcedure='gastro'; selStatus='original'; selWard='general';
+    }
+    await renderAll();
+    setTimeout(()=>{ okBox.style.display='none'; }, 2500);
+  }catch(err){
+    errBox.textContent = err.message || 'حدث خطأ غير متوقع';
+    errBox.style.display='block';
+  }
+});
+
+// ---------- date nav buttons ----------
+document.getElementById('prevDayBtn').addEventListener('click', async ()=>{
+  selectedDate = shiftDate(selectedDate, -1);
+  cancelEdit();
+  await renderAll();
+});
+document.getElementById('nextDayBtn').addEventListener('click', async ()=>{
+  selectedDate = shiftDate(selectedDate, 1);
+  cancelEdit();
+  await renderAll();
+});
+document.getElementById('datePicker').addEventListener('change', async e=>{
+  selectedDate = e.target.value;
+  cancelEdit();
+  await renderAll();
+});
+
+// ---------- init ----------
+function fillGovernorates(){
+  const sel = document.getElementById('p_gov');
+  sel.innerHTML = '<option value="" disabled selected>اختر المحافظة</option>' +
+    GOVERNORATES.map(g=>`<option value="${g}">${g}</option>`).join('');
+}
+function updateClock(){
+  const now = new Date();
+  const opts = { weekday:'long', year:'numeric', month:'long', day:'numeric' };
+  document.getElementById('clockBadge').textContent = now.toLocaleDateString('ar-IQ', opts);
+}
+
+(async function init(){
+  fillGovernorates();
+  updateClock();
+  await checkConnection();
+  document.getElementById('p_date').value = selectedDate;
+  await renderAll();
+})();
+</script>
+</body>
+</html>
