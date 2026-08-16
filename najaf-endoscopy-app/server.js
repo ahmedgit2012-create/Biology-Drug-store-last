@@ -78,12 +78,14 @@ function rowToPatient(r) {
 
 // Note: the combined 'both' procedure has no dedicated capacity key on
 // purpose — it only counts toward the daily total (TOTAL_LIMIT).
+// The 3-slot cap applies only to general anesthesia + general ward together;
+// local anesthesia in the general ward, and the private ward, are both open.
 function computeCounts(list, excludeId) {
   const c = {
     gastro_original: 0, gastro_reserve: 0,
     colon_original: 0, colon_reserve: 0,
     both_original: 0, both_reserve: 0,
-    colon_polyp: 0, ward_general: 0, ward_private: 0, total: 0
+    colon_polyp: 0, ward_general: 0, ward_private: 0, general_anesthesia_general_ward: 0, total: 0
   };
   list.forEach(p => {
     if (excludeId && p.id === excludeId) return;
@@ -97,6 +99,7 @@ function computeCounts(list, excludeId) {
     }
     if ((p.procedure === 'colon' || p.procedure === 'both') && p.polyp) c.colon_polyp++;
     if (p.ward === 'general') c.ward_general++; else c.ward_private++;
+    if (p.ward === 'general' && p.anesthesia === 'general') c.general_anesthesia_general_ward++;
   });
   return c;
 }
@@ -147,10 +150,10 @@ app.post('/api/bookings', async (req, res) => {
   }
   try {
     const { rows } = await pool.query(
-      'SELECT id, procedure, status, polyp, ward FROM bookings WHERE booking_date = $1',
+      'SELECT id, procedure, status, polyp, ward, anesthesia FROM bookings WHERE booking_date = $1',
       [date]
     );
-    const existing = rows.map(r => ({ id: r.id, procedure: r.procedure, status: r.status, polyp: r.polyp, ward: r.ward }));
+    const existing = rows.map(r => ({ id: r.id, procedure: r.procedure, status: r.status, polyp: r.polyp, ward: r.ward, anesthesia: r.anesthesia }));
     const counts = computeCounts(existing);
     const key = `${procedure}_${status}`;
 
@@ -160,8 +163,8 @@ app.post('/api/bookings', async (req, res) => {
     if (counts[key] >= LIMITS[key]) {
       return res.status(409).json({ error: 'اكتملت هذه الفئة من الحجوزات لهذا اليوم' });
     }
-    if (ward === 'general' && counts.ward_general >= LIMITS.ward_general) {
-      return res.status(409).json({ error: 'الجناح العام مكتمل (٣/٣)، الرجاء اختيار الجناح الخاص' });
+    if (ward === 'general' && anesthesia === 'general' && counts.general_anesthesia_general_ward >= LIMITS.ward_general) {
+      return res.status(409).json({ error: 'سقف التخدير العام في الجناح العام مكتمل (٣/٣)، الرجاء اختيار الجناح الخاص أو التخدير الموضعي' });
     }
 
     const newId = id || ('p_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8));
@@ -186,10 +189,10 @@ app.put('/api/bookings/:id', async (req, res) => {
   }
   try {
     const { rows } = await pool.query(
-      'SELECT id, procedure, status, polyp, ward FROM bookings WHERE booking_date = $1',
+      'SELECT id, procedure, status, polyp, ward, anesthesia FROM bookings WHERE booking_date = $1',
       [date]
     );
-    const existing = rows.map(r => ({ id: r.id, procedure: r.procedure, status: r.status, polyp: r.polyp, ward: r.ward }));
+    const existing = rows.map(r => ({ id: r.id, procedure: r.procedure, status: r.status, polyp: r.polyp, ward: r.ward, anesthesia: r.anesthesia }));
     const counts = computeCounts(existing, id);
     const key = `${procedure}_${status}`;
 
@@ -199,8 +202,8 @@ app.put('/api/bookings/:id', async (req, res) => {
     if (counts[key] >= LIMITS[key]) {
       return res.status(409).json({ error: 'اكتملت هذه الفئة من الحجوزات لهذا اليوم' });
     }
-    if (ward === 'general' && counts.ward_general >= LIMITS.ward_general) {
-      return res.status(409).json({ error: 'الجناح العام مكتمل (٣/٣)، الرجاء اختيار الجناح الخاص' });
+    if (ward === 'general' && anesthesia === 'general' && counts.general_anesthesia_general_ward >= LIMITS.ward_general) {
+      return res.status(409).json({ error: 'سقف التخدير العام في الجناح العام مكتمل (٣/٣)، الرجاء اختيار الجناح الخاص أو التخدير الموضعي' });
     }
 
     const result = await pool.query(

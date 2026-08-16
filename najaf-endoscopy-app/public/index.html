@@ -617,7 +617,7 @@ table.plist tr:last-child td{border-bottom:none;}
   </div>
 
   <div class="foot-note">
-    السعة اليومية الكلية: ٢٠ مريضاً — منظار المعدة ١٢ (٨ أصلاء + ٤ احتياط) · منظار القولون ٨ (٤ أصلاء + ٤ احتياط) · منظار معدة وقولون معًا: يُحتسب ضمن الإجمالي الكلي فقط بلا سقف خاص به · الجناح العام: ٣ فقط، والجناح الخاص مفتوح · نوع التخدير (عام/موضعي) يُسجَّل لكل حجز بشكل مستقل عن الجناح.<br>
+    السعة اليومية الكلية: ٢٠ مريضاً — منظار المعدة ١٢ (٨ أصلاء + ٤ احتياط) · منظار القولون ٨ (٤ أصلاء + ٤ احتياط) · منظار معدة وقولون معًا: يُحتسب ضمن الإجمالي الكلي فقط بلا سقف خاص به · التخدير العام في الجناح العام: ٣ فقط، وأي حالة أخرى (تخدير موضعي في الجناح العام، أو أي تخدير في الجناح الخاص) مفتوحة بلا سقف.<br>
     يمكن تغيير تاريخ ووقت أي حجز لاحقاً بالضغط على أيقونة التعديل ✎ في القائمة. هذه البيانات محفوظة في قاعدة بيانات حقيقية ومشتركة بين كل من يفتح هذا الرابط.
   </div>
 </div>
@@ -728,8 +728,10 @@ async function checkConnection(){
 // ---------- helpers ----------
 // Note: the combined 'both' procedure has no dedicated capacity key on
 // purpose — it only counts toward the daily total (TOTAL_LIMIT).
+// The 3-slot cap applies only to general anesthesia + general ward together;
+// local anesthesia in the general ward, and the private ward, are both open.
 function computeCounts(list, excludeId){
-  const c = { gastro_original:0, gastro_reserve:0, colon_original:0, colon_reserve:0, both_original:0, both_reserve:0, colon_polyp:0, ward_general:0, ward_private:0, total:0 };
+  const c = { gastro_original:0, gastro_reserve:0, colon_original:0, colon_reserve:0, both_original:0, both_reserve:0, colon_polyp:0, ward_general:0, ward_private:0, general_anesthesia_general_ward:0, total:0 };
   list.forEach(p=>{
     if(excludeId && p.id===excludeId) return;
     c.total++;
@@ -738,6 +740,7 @@ function computeCounts(list, excludeId){
     else { c[p.status==='original'?'both_original':'both_reserve']++; }
     if((p.procedure==='colon'||p.procedure==='both') && p.polyp) c.colon_polyp++;
     if(p.ward==='general') c.ward_general++; else c.ward_private++;
+    if(p.ward==='general' && p.anesthesia==='general') c.general_anesthesia_general_ward++;
   });
   return c;
 }
@@ -814,12 +817,12 @@ function renderGauges(counts){
   `).join('');
 }
 function renderWardStrip(counts){
-  const gFull = counts.ward_general >= LIMITS.ward_general;
+  const gFull = counts.general_anesthesia_general_ward >= LIMITS.ward_general;
   document.getElementById('wardStrip').innerHTML = `
     <div class="ward-box ${gFull?'full':''}">
       <div class="wt">الجناح العام (تخدير عام)</div>
-      <div class="wv">${counts.ward_general} / ${LIMITS.ward_general}</div>
-      <div class="wo">${gFull?'مكتمل — الرجاء اختيار الجناح الخاص':'متاح'}</div>
+      <div class="wv">${counts.general_anesthesia_general_ward} / ${LIMITS.ward_general}</div>
+      <div class="wo">${gFull?'مكتمل — اختر الجناح الخاص أو تخدير موضعي':'متاح'}</div>
     </div>
     <div class="ward-box">
       <div class="wt">الجناح الخاص</div>
@@ -886,7 +889,7 @@ function renderForm(counts){
   document.querySelectorAll('#segWard button').forEach(b=>{
     b.classList.toggle('sel', b.dataset.val===selWard);
     if(b.dataset.val==='general'){
-      b.disabled = counts.ward_general >= LIMITS.ward_general;
+      b.disabled = selAnesthesia==='general' && counts.general_anesthesia_general_ward >= LIMITS.ward_general;
     }
   });
   document.querySelectorAll('#segAnesthesia button').forEach(b=>{
