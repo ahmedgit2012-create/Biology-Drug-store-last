@@ -44,13 +44,18 @@ async function initDb() {
       phone TEXT NOT NULL,
       booking_date DATE NOT NULL,
       booking_time TIME NOT NULL,
-      procedure TEXT NOT NULL CHECK (procedure IN ('gastro','colon')),
+      procedure TEXT NOT NULL CHECK (procedure IN ('gastro','colon','both')),
       status TEXT NOT NULL CHECK (status IN ('original','reserve')),
       polyp BOOLEAN NOT NULL DEFAULT false,
       ward TEXT NOT NULL CHECK (ward IN ('general','private')),
+      anesthesia TEXT NOT NULL DEFAULT 'general' CHECK (anesthesia IN ('general','local')),
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
   `);
+  // Migrations for databases created before 'both' procedure and anesthesia existed.
+  await pool.query(`ALTER TABLE bookings DROP CONSTRAINT IF EXISTS bookings_procedure_check;`);
+  await pool.query(`ALTER TABLE bookings ADD CONSTRAINT bookings_procedure_check CHECK (procedure IN ('gastro','colon','both'));`);
+  await pool.query(`ALTER TABLE bookings ADD COLUMN IF NOT EXISTS anesthesia TEXT NOT NULL DEFAULT 'general' CHECK (anesthesia IN ('general','local'));`);
   await pool.query(`CREATE INDEX IF NOT EXISTS idx_bookings_date ON bookings(booking_date);`);
 }
 
@@ -66,14 +71,18 @@ function rowToPatient(r) {
     procedure: r.procedure,
     status: r.status,
     polyp: r.polyp,
-    ward: r.ward
+    ward: r.ward,
+    anesthesia: r.anesthesia
   };
 }
 
+// Note: the combined 'both' procedure has no dedicated capacity key on
+// purpose — it only counts toward the daily total (TOTAL_LIMIT).
 function computeCounts(list, excludeId) {
   const c = {
     gastro_original: 0, gastro_reserve: 0,
     colon_original: 0, colon_reserve: 0,
+    both_original: 0, both_reserve: 0,
     colon_polyp: 0, ward_general: 0, ward_private: 0, total: 0
   };
   list.forEach(p => {
@@ -81,10 +90,12 @@ function computeCounts(list, excludeId) {
     c.total++;
     if (p.procedure === 'gastro') {
       c[p.status === 'original' ? 'gastro_original' : 'gastro_reserve']++;
-    } else {
+    } else if (p.procedure === 'colon') {
       c[p.status === 'original' ? 'colon_original' : 'colon_reserve']++;
-      if (p.polyp) c.colon_polyp++;
+    } else {
+      c[p.status === 'original' ? 'both_original' : 'both_reserve']++;
     }
+    if ((p.procedure === 'colon' || p.procedure === 'both') && p.polyp) c.colon_polyp++;
     if (p.ward === 'general') c.ward_general++; else c.ward_private++;
   });
   return c;
@@ -130,8 +141,8 @@ app.get('/api/bookings/counts', async (req, res) => {
 
 // Create a booking
 app.post('/api/bookings', async (req, res) => {
-  const { id, name, age, gov, phone, date, time, procedure, status, polyp, ward } = req.body;
-  if (!name || !age || !gov || !phone || !date || !time || !procedure || !status || !ward) {
+  const { id, name, age, gov, phone, date, time, procedure, status, polyp, ward, anesthesia } = req.body;
+  if (!name || !age || !gov || !phone || !date || !time || !procedure || !status || !ward || !anesthesia) {
     return res.status(400).json({ error: 'الرجاء تعبئة جميع الحقول المطلوبة' });
   }
   try {
@@ -155,9 +166,9 @@ app.post('/api/bookings', async (req, res) => {
 
     const newId = id || ('p_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8));
     await pool.query(
-      `INSERT INTO bookings (id, name, age, governorate, phone, booking_date, booking_time, procedure, status, polyp, ward)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
-      [newId, name, age, gov, phone, date, time, procedure, status, !!polyp, ward]
+      `INSERT INTO bookings (id, name, age, governorate, phone, booking_date, booking_time, procedure, status, polyp, ward, anesthesia)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+      [newId, name, age, gov, phone, date, time, procedure, status, !!polyp, ward, anesthesia]
     );
     res.status(201).json({ ok: true, id: newId });
   } catch (e) {
@@ -169,8 +180,8 @@ app.post('/api/bookings', async (req, res) => {
 // Update a booking (including moving its date/time)
 app.put('/api/bookings/:id', async (req, res) => {
   const { id } = req.params;
-  const { name, age, gov, phone, date, time, procedure, status, polyp, ward } = req.body;
-  if (!name || !age || !gov || !phone || !date || !time || !procedure || !status || !ward) {
+  const { name, age, gov, phone, date, time, procedure, status, polyp, ward, anesthesia } = req.body;
+  if (!name || !age || !gov || !phone || !date || !time || !procedure || !status || !ward || !anesthesia) {
     return res.status(400).json({ error: 'الرجاء تعبئة جميع الحقول المطلوبة' });
   }
   try {
@@ -194,8 +205,8 @@ app.put('/api/bookings/:id', async (req, res) => {
 
     const result = await pool.query(
       `UPDATE bookings SET name=$1, age=$2, governorate=$3, phone=$4, booking_date=$5,
-       booking_time=$6, procedure=$7, status=$8, polyp=$9, ward=$10 WHERE id=$11`,
-      [name, age, gov, phone, date, time, procedure, status, !!polyp, ward, id]
+       booking_time=$6, procedure=$7, status=$8, polyp=$9, ward=$10, anesthesia=$11 WHERE id=$12`,
+      [name, age, gov, phone, date, time, procedure, status, !!polyp, ward, anesthesia, id]
     );
     if (result.rowCount === 0) return res.status(404).json({ error: 'الحجز غير موجود' });
     res.json({ ok: true });

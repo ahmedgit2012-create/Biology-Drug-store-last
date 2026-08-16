@@ -452,6 +452,7 @@ table.plist tr:last-child td{border-bottom:none;}
 }
 .tag.gastro{background:var(--teal-soft);color:var(--teal-dark);}
 .tag.colon{background:var(--gold-soft);color:#7A5A15;}
+.tag.both{background:#EAE4F9;color:#4C3D8F;}
 .tag.original{background:#DFF1E7;color:var(--green);}
 .tag.reserve{background:#FCE9DC;color:#9B5B1E;}
 .time-cell{font-weight:900;color:var(--teal-dark);}
@@ -543,6 +544,7 @@ table.plist tr:last-child td{border-bottom:none;}
           <div class="seg" id="segProcedure">
             <button type="button" data-val="gastro" class="sel">منظار المعدة</button>
             <button type="button" data-val="colon">منظار القولون</button>
+            <button type="button" data-val="both">معدة وقولون معًا</button>
           </div>
         </div>
 
@@ -562,7 +564,15 @@ table.plist tr:last-child td{border-bottom:none;}
         </div>
 
         <div class="field" style="margin-top:14px;">
-          <label>الجناح (تحت التخدير العام)</label>
+          <label>نوع التخدير</label>
+          <div class="seg" id="segAnesthesia">
+            <button type="button" data-val="general" class="sel">تخدير عام</button>
+            <button type="button" data-val="local">تخدير موضعي</button>
+          </div>
+        </div>
+
+        <div class="field" style="margin-top:14px;">
+          <label>الجناح</label>
           <div class="seg" id="segWard">
             <button type="button" data-val="general" class="sel">الجناح العام</button>
             <button type="button" data-val="private">الجناح الخاص</button>
@@ -594,6 +604,7 @@ table.plist tr:last-child td{border-bottom:none;}
               <th>الهاتف</th>
               <th>المنظار</th>
               <th>الحالة</th>
+              <th>التخدير</th>
               <th>الجناح</th>
               <th></th>
             </tr>
@@ -606,7 +617,7 @@ table.plist tr:last-child td{border-bottom:none;}
   </div>
 
   <div class="foot-note">
-    السعة اليومية الكلية: ٢٠ مريضاً — منظار المعدة ١٢ (٨ أصلاء + ٤ احتياط) · منظار القولون ٨ (٤ أصلاء + ٤ احتياط) · الجناح العام تحت التخدير العام: ٣ فقط، والجناح الخاص مفتوح.<br>
+    السعة اليومية الكلية: ٢٠ مريضاً — منظار المعدة ١٢ (٨ أصلاء + ٤ احتياط) · منظار القولون ٨ (٤ أصلاء + ٤ احتياط) · منظار معدة وقولون معًا: يُحتسب ضمن الإجمالي الكلي فقط بلا سقف خاص به · الجناح العام: ٣ فقط، والجناح الخاص مفتوح · نوع التخدير (عام/موضعي) يُسجَّل لكل حجز بشكل مستقل عن الجناح.<br>
     يمكن تغيير تاريخ ووقت أي حجز لاحقاً بالضغط على أيقونة التعديل ✎ في القائمة. هذه البيانات محفوظة في قاعدة بيانات حقيقية ومشتركة بين كل من يفتح هذا الرابط.
   </div>
 </div>
@@ -634,6 +645,7 @@ let tabCounts = {};
 let selProcedure = 'gastro';
 let selStatus = 'original';
 let selWard = 'general';
+let selAnesthesia = 'general';
 let editingId = null;
 let editingOrigDate = null;
 
@@ -714,13 +726,17 @@ async function checkConnection(){
 }
 
 // ---------- helpers ----------
+// Note: the combined 'both' procedure has no dedicated capacity key on
+// purpose — it only counts toward the daily total (TOTAL_LIMIT).
 function computeCounts(list, excludeId){
-  const c = { gastro_original:0, gastro_reserve:0, colon_original:0, colon_reserve:0, colon_polyp:0, ward_general:0, ward_private:0, total:0 };
+  const c = { gastro_original:0, gastro_reserve:0, colon_original:0, colon_reserve:0, both_original:0, both_reserve:0, colon_polyp:0, ward_general:0, ward_private:0, total:0 };
   list.forEach(p=>{
     if(excludeId && p.id===excludeId) return;
     c.total++;
     if(p.procedure==='gastro'){ c[p.status==='original'?'gastro_original':'gastro_reserve']++; }
-    else { c[p.status==='original'?'colon_original':'colon_reserve']++; if(p.polyp) c.colon_polyp++; }
+    else if(p.procedure==='colon'){ c[p.status==='original'?'colon_original':'colon_reserve']++; }
+    else { c[p.status==='original'?'both_original':'both_reserve']++; }
+    if((p.procedure==='colon'||p.procedure==='both') && p.polyp) c.colon_polyp++;
     if(p.ward==='general') c.ward_general++; else c.ward_private++;
   });
   return c;
@@ -738,9 +754,10 @@ function gaugeSvg(value,max,color){
     <text x="40" y="52" text-anchor="middle" class="gauge-val" font-size="10" fill="#8FB6AC">من ${max}</text>
   </svg>`;
 }
-function fmtProcedure(p){ return p==='gastro' ? 'المعدة' : 'القولون'; }
+function fmtProcedure(p){ return p==='gastro' ? 'المعدة' : p==='colon' ? 'القولون' : 'معدة وقولون'; }
 function fmtStatus(s){ return s==='original' ? 'أصلي' : 'احتياط'; }
 function fmtWard(w){ return w==='general' ? 'عام' : 'خاص'; }
+function fmtAnesthesia(a){ return a==='general' ? 'عام' : 'موضعي'; }
 
 // ---------- render ----------
 function renderDateNav(){
@@ -785,6 +802,7 @@ function renderGauges(counts){
     { label:'منظار المعدة - احتياط', val:counts.gastro_reserve, max:LIMITS.gastro_reserve, color:'#E0A93F' },
     { label:'منظار القولون - أصلاء', val:counts.colon_original, max:LIMITS.colon_original, color:'#3FA88C' },
     { label:'منظار القولون - احتياط', val:counts.colon_reserve, max:LIMITS.colon_reserve, color:'#E0A93F' },
+    { label:'معدة وقولون معًا', val:counts.both_original+counts.both_reserve, max:TOTAL_LIMIT, color:'#8B6FD1' },
     { label:'زوائد لحمية (ضمن القولون)', val:counts.colon_polyp, max:LIMITS.colon_original+LIMITS.colon_reserve, color:'#C97B5A' },
     { label:'الإجمالي اليومي', val:counts.total, max:TOTAL_LIMIT, color:'#4EC0E9' }
   ];
@@ -829,6 +847,7 @@ function renderTable(list){
       <td>${p.phone}</td>
       <td><span class="tag ${p.procedure}">${fmtProcedure(p.procedure)}</span></td>
       <td><span class="tag ${p.status}">${fmtStatus(p.status)}</span></td>
+      <td>${fmtAnesthesia(p.anesthesia)}</td>
       <td>${fmtWard(p.ward)}</td>
       <td>
         <button class="act-btn edit" data-id="${p.id}" title="تعديل التاريخ/الوقت والبيانات">✎</button>
@@ -870,7 +889,10 @@ function renderForm(counts){
       b.disabled = counts.ward_general >= LIMITS.ward_general;
     }
   });
-  document.getElementById('polypWrap').style.display = selProcedure==='colon' ? 'block' : 'none';
+  document.querySelectorAll('#segAnesthesia button').forEach(b=>{
+    b.classList.toggle('sel', b.dataset.val===selAnesthesia);
+  });
+  document.getElementById('polypWrap').style.display = (selProcedure==='colon'||selProcedure==='both') ? 'block' : 'none';
 
   const meta = dayMeta(document.getElementById('p_date').value || selectedDate);
   const dayFull = counts.total >= TOTAL_LIMIT;
@@ -920,6 +942,7 @@ function startEdit(patient){
   selProcedure = patient.procedure;
   selStatus = patient.status;
   selWard = patient.ward;
+  selAnesthesia = patient.anesthesia;
   document.getElementById('editBanner').style.display = 'flex';
   document.getElementById('okMsg').style.display='none';
   document.getElementById('errMsg').style.display='none';
@@ -932,7 +955,7 @@ function cancelEdit(){
   editingOrigDate = null;
   document.getElementById('editBanner').style.display = 'none';
   document.getElementById('bookForm').reset();
-  selProcedure='gastro'; selStatus='original'; selWard='general';
+  selProcedure='gastro'; selStatus='original'; selWard='general'; selAnesthesia='general';
 }
 document.getElementById('cancelEditBtn').addEventListener('click', async ()=>{ cancelEdit(); await renderAll(); });
 
@@ -951,6 +974,11 @@ document.getElementById('segStatus').addEventListener('click', e=>{
 document.getElementById('segWard').addEventListener('click', e=>{
   const btn = e.target.closest('button'); if(!btn || btn.disabled) return;
   selWard = btn.dataset.val;
+  refreshFormOnly();
+});
+document.getElementById('segAnesthesia').addEventListener('click', e=>{
+  const btn = e.target.closest('button'); if(!btn) return;
+  selAnesthesia = btn.dataset.val;
   refreshFormOnly();
 });
 document.getElementById('p_date').addEventListener('change', async e=>{
@@ -982,7 +1010,7 @@ document.getElementById('bookForm').addEventListener('submit', async (e)=>{
   const gov = document.getElementById('p_gov').value;
   const date = document.getElementById('p_date').value;
   const time = document.getElementById('p_time').value;
-  const polyp = selProcedure==='colon' && document.getElementById('p_polyp').checked;
+  const polyp = (selProcedure==='colon'||selProcedure==='both') && document.getElementById('p_polyp').checked;
 
   if(!name || !age || !phone || !gov || !date || !time){
     errBox.textContent = 'الرجاء تعبئة جميع الحقول المطلوبة، بما فيها التاريخ والوقت';
@@ -996,7 +1024,7 @@ document.getElementById('bookForm').addEventListener('submit', async (e)=>{
     return;
   }
 
-  const payload = { name, age:Number(age), gov, phone, date, time, procedure:selProcedure, status:selStatus, polyp, ward:selWard };
+  const payload = { name, age:Number(age), gov, phone, date, time, procedure:selProcedure, status:selStatus, polyp, ward:selWard, anesthesia:selAnesthesia };
 
   try{
     if(editingId){
@@ -1011,7 +1039,7 @@ document.getElementById('bookForm').addEventListener('submit', async (e)=>{
       okBox.style.display='block';
       document.getElementById('bookForm').reset();
       document.getElementById('p_gov').value = gov;
-      selProcedure='gastro'; selStatus='original'; selWard='general';
+      selProcedure='gastro'; selStatus='original'; selWard='general'; selAnesthesia='general';
     }
     await renderAll();
     setTimeout(()=>{ okBox.style.display='none'; }, 2500);
