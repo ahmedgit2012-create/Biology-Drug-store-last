@@ -49,13 +49,15 @@ async function initDb() {
       polyp BOOLEAN NOT NULL DEFAULT false,
       ward TEXT NOT NULL CHECK (ward IN ('general','private')),
       anesthesia TEXT NOT NULL DEFAULT 'general' CHECK (anesthesia IN ('general','local')),
+      exam_status TEXT NOT NULL DEFAULT 'pending' CHECK (exam_status IN ('pending','completed','postponed','cancelled')),
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
   `);
-  // Migrations for databases created before 'both' procedure and anesthesia existed.
+  // Migrations for databases created before 'both' procedure, anesthesia and exam_status existed.
   await pool.query(`ALTER TABLE bookings DROP CONSTRAINT IF EXISTS bookings_procedure_check;`);
   await pool.query(`ALTER TABLE bookings ADD CONSTRAINT bookings_procedure_check CHECK (procedure IN ('gastro','colon','both'));`);
   await pool.query(`ALTER TABLE bookings ADD COLUMN IF NOT EXISTS anesthesia TEXT NOT NULL DEFAULT 'general' CHECK (anesthesia IN ('general','local'));`);
+  await pool.query(`ALTER TABLE bookings ADD COLUMN IF NOT EXISTS exam_status TEXT NOT NULL DEFAULT 'pending' CHECK (exam_status IN ('pending','completed','postponed','cancelled'));`);
   await pool.query(`CREATE INDEX IF NOT EXISTS idx_bookings_date ON bookings(booking_date);`);
 }
 
@@ -72,7 +74,8 @@ function rowToPatient(r) {
     status: r.status,
     polyp: r.polyp,
     ward: r.ward,
-    anesthesia: r.anesthesia
+    anesthesia: r.anesthesia,
+    examStatus: r.exam_status
   };
 }
 
@@ -80,6 +83,7 @@ function rowToPatient(r) {
 // purpose — it only counts toward the daily total (TOTAL_LIMIT).
 // The 3-slot cap applies only to general anesthesia + general ward together;
 // local anesthesia in the general ward, and the private ward, are both open.
+// Postponed/cancelled bookings free their slot: they're excluded from every count.
 function computeCounts(list, excludeId) {
   const c = {
     gastro_original: 0, gastro_reserve: 0,
@@ -89,6 +93,7 @@ function computeCounts(list, excludeId) {
   };
   list.forEach(p => {
     if (excludeId && p.id === excludeId) return;
+    if (p.examStatus === 'postponed' || p.examStatus === 'cancelled') return;
     c.total++;
     if (p.procedure === 'gastro') {
       c[p.status === 'original' ? 'gastro_original' : 'gastro_reserve']++;
@@ -129,7 +134,8 @@ app.get('/api/bookings/counts', async (req, res) => {
   try {
     const { rows } = await pool.query(
       `SELECT booking_date, COUNT(*) AS cnt FROM bookings
-       WHERE booking_date = ANY($1::date[]) GROUP BY booking_date`,
+       WHERE booking_date = ANY($1::date[]) AND exam_status NOT IN ('postponed','cancelled')
+       GROUP BY booking_date`,
       [dates]
     );
     const result = {};
@@ -150,10 +156,10 @@ app.post('/api/bookings', async (req, res) => {
   }
   try {
     const { rows } = await pool.query(
-      'SELECT id, procedure, status, polyp, ward, anesthesia FROM bookings WHERE booking_date = $1',
+      'SELECT id, procedure, status, polyp, ward, anesthesia, exam_status FROM bookings WHERE booking_date = $1',
       [date]
     );
-    const existing = rows.map(r => ({ id: r.id, procedure: r.procedure, status: r.status, polyp: r.polyp, ward: r.ward, anesthesia: r.anesthesia }));
+    const existing = rows.map(r => ({ id: r.id, procedure: r.procedure, status: r.status, polyp: r.polyp, ward: r.ward, anesthesia: r.anesthesia, examStatus: r.exam_status }));
     const counts = computeCounts(existing);
     const key = `${procedure}_${status}`;
 
@@ -189,10 +195,10 @@ app.put('/api/bookings/:id', async (req, res) => {
   }
   try {
     const { rows } = await pool.query(
-      'SELECT id, procedure, status, polyp, ward, anesthesia FROM bookings WHERE booking_date = $1',
+      'SELECT id, procedure, status, polyp, ward, anesthesia, exam_status FROM bookings WHERE booking_date = $1',
       [date]
     );
-    const existing = rows.map(r => ({ id: r.id, procedure: r.procedure, status: r.status, polyp: r.polyp, ward: r.ward, anesthesia: r.anesthesia }));
+    const existing = rows.map(r => ({ id: r.id, procedure: r.procedure, status: r.status, polyp: r.polyp, ward: r.ward, anesthesia: r.anesthesia, examStatus: r.exam_status }));
     const counts = computeCounts(existing, id);
     const key = `${procedure}_${status}`;
 
@@ -211,6 +217,25 @@ app.put('/api/bookings/:id', async (req, res) => {
        booking_time=$6, procedure=$7, status=$8, polyp=$9, ward=$10, anesthesia=$11 WHERE id=$12`,
       [name, age, gov, phone, date, time, procedure, status, !!polyp, ward, anesthesia, id]
     );
+    if (result.rowCount === 0) return res.status(404).json({ error: 'الحجز غير موجود' });
+    res.json({ ok: true });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+// Quick update of a booking's exam status (completed / postponed / cancelled / pending).
+// Postponed and cancelled free the booking's slot from capacity counts.
+app.patch('/api/bookings/:id/exam-status', async (req, res) => {
+  const { id } = req.params;
+  const { examStatus } = req.body;
+  const allowed = ['pending', 'completed', 'postponed', 'cancelled'];
+  if (!allowed.includes(examStatus)) {
+    return res.status(400).json({ error: 'حالة فحص غير صالحة' });
+  }
+  try {
+    const result = await pool.query('UPDATE bookings SET exam_status = $1 WHERE id = $2', [examStatus, id]);
     if (result.rowCount === 0) return res.status(404).json({ error: 'الحجز غير موجود' });
     res.json({ ok: true });
   } catch (e) {

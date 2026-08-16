@@ -465,6 +465,22 @@ table.plist tr:last-child td{border-bottom:none;}
 }
 .act-btn.del{color:var(--red);}
 .act-btn.edit{color:var(--teal);}
+.exam-status-sel{
+  border-radius:20px;
+  border:none;
+  padding:3px 8px;
+  font-size:10.5px;
+  font-weight:700;
+  font-family:inherit;
+  cursor:pointer;
+  background:var(--bg);
+  color:var(--ink-soft);
+}
+.exam-status-sel.exam-completed{background:#DFF1E7;color:var(--green);}
+.exam-status-sel.exam-postponed{background:var(--gold-soft);color:#7A5A15;}
+.exam-status-sel.exam-cancelled{background:var(--red-soft);color:var(--red);}
+tr.exam-postponed, tr.exam-cancelled{opacity:0.55;}
+tr.exam-cancelled td:not(:last-child):not(:nth-last-child(2)){text-decoration:line-through;}
 .empty-note{
   text-align:center;
   color:var(--ink-soft);
@@ -606,6 +622,7 @@ table.plist tr:last-child td{border-bottom:none;}
               <th>الحالة</th>
               <th>التخدير</th>
               <th>الجناح</th>
+              <th>حالة الفحص</th>
               <th></th>
             </tr>
           </thead>
@@ -618,7 +635,8 @@ table.plist tr:last-child td{border-bottom:none;}
 
   <div class="foot-note">
     السعة اليومية الكلية: ٢٠ مريضاً — منظار المعدة ١٢ (٨ أصلاء + ٤ احتياط) · منظار القولون ٨ (٤ أصلاء + ٤ احتياط) · منظار معدة وقولون معًا: يُحتسب ضمن الإجمالي الكلي فقط بلا سقف خاص به · التخدير العام في الجناح العام: ٣ فقط، وأي حالة أخرى (تخدير موضعي في الجناح العام، أو أي تخدير في الجناح الخاص) مفتوحة بلا سقف.<br>
-    يمكن تغيير تاريخ ووقت أي حجز لاحقاً بالضغط على أيقونة التعديل ✎ في القائمة. هذه البيانات محفوظة في قاعدة بيانات حقيقية ومشتركة بين كل من يفتح هذا الرابط.
+    يمكن تغيير تاريخ ووقت أي حجز لاحقاً بالضغط على أيقونة التعديل ✎ في القائمة. هذه البيانات محفوظة في قاعدة بيانات حقيقية ومشتركة بين كل من يفتح هذا الرابط.<br>
+    حالة الفحص (في القائمة): "مكتمل" لتوثيق إنجاز الفحص، أما "مؤجل" و"ملغى" فيحرّران مكان المريض فوراً من كل حسابات السعة لذلك اليوم ليصبح متاحاً لمريض آخر.
   </div>
 </div>
 
@@ -714,6 +732,12 @@ async function apiDelete(id){
   if(!r.ok) throw new Error('تعذّر الحذف');
   return r.json();
 }
+async function apiSetExamStatus(id, examStatus){
+  const r = await fetch(`${API}/bookings/${id}/exam-status`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ examStatus }) });
+  const data = await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(data.error || 'تعذّر تحديث حالة الفحص');
+  return data;
+}
 async function checkConnection(){
   const badge = document.getElementById('connBadge');
   try{
@@ -730,10 +754,12 @@ async function checkConnection(){
 // purpose — it only counts toward the daily total (TOTAL_LIMIT).
 // The 3-slot cap applies only to general anesthesia + general ward together;
 // local anesthesia in the general ward, and the private ward, are both open.
+// Postponed/cancelled bookings free their slot: they're excluded from every count.
 function computeCounts(list, excludeId){
   const c = { gastro_original:0, gastro_reserve:0, colon_original:0, colon_reserve:0, both_original:0, both_reserve:0, colon_polyp:0, ward_general:0, ward_private:0, general_anesthesia_general_ward:0, total:0 };
   list.forEach(p=>{
     if(excludeId && p.id===excludeId) return;
+    if(p.examStatus==='postponed' || p.examStatus==='cancelled') return;
     c.total++;
     if(p.procedure==='gastro'){ c[p.status==='original'?'gastro_original':'gastro_reserve']++; }
     else if(p.procedure==='colon'){ c[p.status==='original'?'colon_original':'colon_reserve']++; }
@@ -761,6 +787,7 @@ function fmtProcedure(p){ return p==='gastro' ? 'المعدة' : p==='colon' ? '
 function fmtStatus(s){ return s==='original' ? 'أصلي' : 'احتياط'; }
 function fmtWard(w){ return w==='general' ? 'عام' : 'خاص'; }
 function fmtAnesthesia(a){ return a==='general' ? 'عام' : 'موضعي'; }
+const EXAM_STATUS_LABELS = { pending:'قيد الانتظار', completed:'مكتمل', postponed:'مؤجل', cancelled:'ملغى' };
 
 // ---------- render ----------
 function renderDateNav(){
@@ -842,7 +869,7 @@ function renderTable(list){
   empty.style.display = 'none';
   const sorted = [...list].sort((a,b)=> (a.time||'').localeCompare(b.time||''));
   body.innerHTML = sorted.map(p=>`
-    <tr>
+    <tr class="exam-${p.examStatus}">
       <td class="time-cell">${p.time||'—'}</td>
       <td>${p.name}${p.polyp?' <span class="tag colon">زوائد لحمية</span>':''}</td>
       <td>${p.age}</td>
@@ -853,11 +880,29 @@ function renderTable(list){
       <td>${fmtAnesthesia(p.anesthesia)}</td>
       <td>${fmtWard(p.ward)}</td>
       <td>
+        <select class="exam-status-sel exam-${p.examStatus}" data-id="${p.id}" title="لا يُحتسب ضمن السعة عند التأجيل أو الإلغاء">
+          ${Object.entries(EXAM_STATUS_LABELS).map(([val,label])=>
+            `<option value="${val}" ${p.examStatus===val?'selected':''}>${label}</option>`
+          ).join('')}
+        </select>
+      </td>
+      <td>
         <button class="act-btn edit" data-id="${p.id}" title="تعديل التاريخ/الوقت والبيانات">✎</button>
         <button class="act-btn del" data-id="${p.id}" title="حذف">✕</button>
       </td>
     </tr>
   `).join('');
+  body.querySelectorAll('.exam-status-sel').forEach(sel=>{
+    sel.addEventListener('change', async ()=>{
+      const id = sel.dataset.id;
+      try{
+        await apiSetExamStatus(id, sel.value);
+        await renderAll();
+      }catch(e){
+        alert(e.message);
+      }
+    });
+  });
   body.querySelectorAll('.act-btn.del').forEach(btn=>{
     btn.addEventListener('click', async ()=>{
       const id = btn.dataset.id;
