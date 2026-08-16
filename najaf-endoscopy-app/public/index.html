@@ -634,7 +634,7 @@ tr.exam-cancelled td:not(:last-child):not(:nth-last-child(2)){text-decoration:li
   </div>
 
   <div class="foot-note">
-    السعة اليومية الكلية: ٢٠ مريضاً — منظار المعدة ١٢ (٨ أصلاء + ٤ احتياط) · منظار القولون ٨ (٤ أصلاء + ٤ احتياط) · منظار معدة وقولون معًا: يُحتسب ضمن الإجمالي الكلي فقط بلا سقف خاص به · التخدير العام في الجناح العام: ٣ فقط، وأي حالة أخرى (تخدير موضعي في الجناح العام، أو أي تخدير في الجناح الخاص) مفتوحة بلا سقف.<br>
+    السعة اليومية الكلية: ٢٠ مريضاً — منظار المعدة ١٢ (٨ أصلاء + ٤ احتياط) · منظار القولون ٨ (٤ أصلاء + ٤ احتياط) · منظار معدة وقولون معًا: بلا سقف خاص به، لكنه يُحتسب مريضين اثنين من الإجمالي الكلي (٢٠) · التخدير العام في الجناح العام: ٣ فقط، وأي حالة أخرى (تخدير موضعي في الجناح العام، أو أي تخدير في الجناح الخاص) مفتوحة بلا سقف.<br>
     يمكن تغيير تاريخ ووقت أي حجز لاحقاً بالضغط على أيقونة التعديل ✎ في القائمة. هذه البيانات محفوظة في قاعدة بيانات حقيقية ومشتركة بين كل من يفتح هذا الرابط.<br>
     حالة الفحص (في القائمة): "مكتمل" لتوثيق إنجاز الفحص، أما "مؤجل" و"ملغى" فيحرّران مكان المريض فوراً من كل حسابات السعة لذلك اليوم ليصبح متاحاً لمريض آخر.
   </div>
@@ -751,16 +751,18 @@ async function checkConnection(){
 
 // ---------- helpers ----------
 // Note: the combined 'both' procedure has no dedicated capacity key on
-// purpose — it only counts toward the daily total (TOTAL_LIMIT).
+// purpose — it only counts toward the daily total (TOTAL_LIMIT), and counts
+// as 2 patients there (it uses two procedure slots, gastro + colon).
 // The 3-slot cap applies only to general anesthesia + general ward together;
 // local anesthesia in the general ward, and the private ward, are both open.
 // Postponed/cancelled bookings free their slot: they're excluded from every count.
+function totalWeight(procedure){ return procedure==='both' ? 2 : 1; }
 function computeCounts(list, excludeId){
   const c = { gastro_original:0, gastro_reserve:0, colon_original:0, colon_reserve:0, both_original:0, both_reserve:0, colon_polyp:0, ward_general:0, ward_private:0, general_anesthesia_general_ward:0, total:0 };
   list.forEach(p=>{
     if(excludeId && p.id===excludeId) return;
     if(p.examStatus==='postponed' || p.examStatus==='cancelled') return;
-    c.total++;
+    c.total += totalWeight(p.procedure);
     if(p.procedure==='gastro'){ c[p.status==='original'?'gastro_original':'gastro_reserve']++; }
     else if(p.procedure==='colon'){ c[p.status==='original'?'colon_original':'colon_reserve']++; }
     else { c[p.status==='original'?'both_original':'both_reserve']++; }
@@ -943,7 +945,7 @@ function renderForm(counts){
   document.getElementById('polypWrap').style.display = (selProcedure==='colon'||selProcedure==='both') ? 'block' : 'none';
 
   const meta = dayMeta(document.getElementById('p_date').value || selectedDate);
-  const dayFull = counts.total >= TOTAL_LIMIT;
+  const dayFull = counts.total + totalWeight(selProcedure) > TOTAL_LIMIT;
   const btn = document.getElementById('submitBtn');
   btn.disabled = dayFull || meta.closed;
   if(editingId){

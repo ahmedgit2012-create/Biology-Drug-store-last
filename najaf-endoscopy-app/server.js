@@ -80,10 +80,14 @@ function rowToPatient(r) {
 }
 
 // Note: the combined 'both' procedure has no dedicated capacity key on
-// purpose — it only counts toward the daily total (TOTAL_LIMIT).
+// purpose — it only counts toward the daily total (TOTAL_LIMIT), and counts
+// as 2 patients there (it uses two procedure slots, gastro + colon).
 // The 3-slot cap applies only to general anesthesia + general ward together;
 // local anesthesia in the general ward, and the private ward, are both open.
 // Postponed/cancelled bookings free their slot: they're excluded from every count.
+function totalWeight(procedure) {
+  return procedure === 'both' ? 2 : 1;
+}
 function computeCounts(list, excludeId) {
   const c = {
     gastro_original: 0, gastro_reserve: 0,
@@ -94,7 +98,7 @@ function computeCounts(list, excludeId) {
   list.forEach(p => {
     if (excludeId && p.id === excludeId) return;
     if (p.examStatus === 'postponed' || p.examStatus === 'cancelled') return;
-    c.total++;
+    c.total += totalWeight(p.procedure);
     if (p.procedure === 'gastro') {
       c[p.status === 'original' ? 'gastro_original' : 'gastro_reserve']++;
     } else if (p.procedure === 'colon') {
@@ -133,7 +137,7 @@ app.get('/api/bookings/counts', async (req, res) => {
   if (dates.length === 0) return res.json({});
   try {
     const { rows } = await pool.query(
-      `SELECT booking_date, COUNT(*) AS cnt FROM bookings
+      `SELECT booking_date, SUM(CASE WHEN procedure='both' THEN 2 ELSE 1 END) AS cnt FROM bookings
        WHERE booking_date = ANY($1::date[]) AND exam_status NOT IN ('postponed','cancelled')
        GROUP BY booking_date`,
       [dates]
@@ -163,7 +167,7 @@ app.post('/api/bookings', async (req, res) => {
     const counts = computeCounts(existing);
     const key = `${procedure}_${status}`;
 
-    if (counts.total >= TOTAL_LIMIT) {
+    if (counts.total + totalWeight(procedure) > TOTAL_LIMIT) {
       return res.status(409).json({ error: 'اكتمل العدد الكلي لهذا اليوم (٢٠ مريضاً)' });
     }
     if (counts[key] >= LIMITS[key]) {
@@ -202,7 +206,7 @@ app.put('/api/bookings/:id', async (req, res) => {
     const counts = computeCounts(existing, id);
     const key = `${procedure}_${status}`;
 
-    if (counts.total >= TOTAL_LIMIT) {
+    if (counts.total + totalWeight(procedure) > TOTAL_LIMIT) {
       return res.status(409).json({ error: 'اكتمل العدد الكلي لهذا اليوم (٢٠ مريضاً)' });
     }
     if (counts[key] >= LIMITS[key]) {
