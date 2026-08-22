@@ -476,11 +476,12 @@ table.plist tr:last-child td{border-bottom:none;}
   background:var(--bg);
   color:var(--ink-soft);
 }
-.exam-status-sel.exam-completed{background:#DFF1E7;color:var(--green);}
+.exam-status-sel.exam-completed{background:var(--red-soft);color:var(--red);}
 .exam-status-sel.exam-postponed{background:var(--gold-soft);color:#7A5A15;}
 .exam-status-sel.exam-cancelled{background:var(--red-soft);color:var(--red);}
 tr.exam-postponed, tr.exam-cancelled{opacity:0.55;}
 tr.exam-cancelled td:not(:last-child):not(:nth-last-child(2)){text-decoration:line-through;}
+tr.exam-completed td{background:var(--red-soft);}
 .empty-note{
   text-align:center;
   color:var(--ink-soft);
