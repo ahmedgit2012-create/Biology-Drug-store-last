@@ -171,8 +171,8 @@ app.get('/api/referrers', async (req, res) => {
 // Create a booking
 app.post('/api/bookings', async (req, res) => {
   const { id, name, age, gov, phone, date, time, procedure, status, polyp, ward, anesthesia, referrer } = req.body;
-  if (!name || !age || !gov || !phone || !date || !time || !procedure || !status || !ward || !anesthesia) {
-    return res.status(400).json({ error: 'الرجاء تعبئة جميع الحقول المطلوبة' });
+  if (!name || !age || !gov || !phone || !date || !time || !procedure || !status || !ward || !anesthesia || !(referrer || '').trim()) {
+    return res.status(400).json({ error: 'الرجاء تعبئة جميع الحقول المطلوبة، بما فيها الجهة المحيلة' });
   }
   try {
     const { rows } = await pool.query(
@@ -210,8 +210,8 @@ app.post('/api/bookings', async (req, res) => {
 app.put('/api/bookings/:id', async (req, res) => {
   const { id } = req.params;
   const { name, age, gov, phone, date, time, procedure, status, polyp, ward, anesthesia, referrer } = req.body;
-  if (!name || !age || !gov || !phone || !date || !time || !procedure || !status || !ward || !anesthesia) {
-    return res.status(400).json({ error: 'الرجاء تعبئة جميع الحقول المطلوبة' });
+  if (!name || !age || !gov || !phone || !date || !time || !procedure || !status || !ward || !anesthesia || !(referrer || '').trim()) {
+    return res.status(400).json({ error: 'الرجاء تعبئة جميع الحقول المطلوبة، بما فيها الجهة المحيلة' });
   }
   try {
     const { rows } = await pool.query(

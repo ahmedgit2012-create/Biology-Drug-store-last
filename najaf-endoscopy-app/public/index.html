@@ -547,7 +547,7 @@ tr.exam-completed td{background:var(--red-soft);}
 
         <div class="field">
           <label>الجهة المحيلة (استشاري / عيادة أخرى)</label>
-          <input type="text" id="p_referrer" list="referrerList" placeholder="اكتب اسمًا جديدًا أو اختر من القائمة">
+          <input type="text" id="p_referrer" list="referrerList" placeholder="اكتب اسمًا جديدًا أو اختر من القائمة" required>
           <datalist id="referrerList"></datalist>
         </div>
 
@@ -1084,8 +1084,8 @@ document.getElementById('bookForm').addEventListener('submit', async (e)=>{
   const time = document.getElementById('p_time').value;
   const polyp = (selProcedure==='colon'||selProcedure==='both') && document.getElementById('p_polyp').checked;
 
-  if(!name || !age || !phone || !gov || !date || !time){
-    errBox.textContent = 'الرجاء تعبئة جميع الحقول المطلوبة، بما فيها التاريخ والوقت';
+  if(!name || !age || !phone || !gov || !referrer || !date || !time){
+    errBox.textContent = 'الرجاء تعبئة جميع الحقول المطلوبة، بما فيها الجهة المحيلة والتاريخ والوقت';
     errBox.style.display='block';
     return;
   }
