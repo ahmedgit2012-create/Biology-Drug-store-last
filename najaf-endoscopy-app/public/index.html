@@ -545,6 +545,12 @@ tr.exam-completed td{background:var(--red-soft);}
           <select id="p_gov" required></select>
         </div>
 
+        <div class="field">
+          <label>الجهة المحيلة (استشاري / عيادة أخرى)</label>
+          <input type="text" id="p_referrer" list="referrerList" placeholder="اكتب اسمًا جديدًا أو اختر من القائمة">
+          <datalist id="referrerList"></datalist>
+        </div>
+
         <div class="row2">
           <div class="field">
             <label>تاريخ الحجز</label>
@@ -619,6 +625,7 @@ tr.exam-completed td{background:var(--red-soft);}
               <th>العمر</th>
               <th>المحافظة</th>
               <th>الهاتف</th>
+              <th>الجهة المحيلة</th>
               <th>المنظار</th>
               <th>الحالة</th>
               <th>التخدير</th>
@@ -738,6 +745,17 @@ async function apiSetExamStatus(id, examStatus){
   const data = await r.json().catch(()=>({}));
   if(!r.ok) throw new Error(data.error || 'تعذّر تحديث حالة الفحص');
   return data;
+}
+async function apiGetReferrers(){
+  const r = await fetch(`${API}/referrers`);
+  if(!r.ok) return [];
+  return r.json();
+}
+async function refreshReferrerList(){
+  try{
+    const referrers = await apiGetReferrers();
+    document.getElementById('referrerList').innerHTML = referrers.map(r=>`<option value="${r}"></option>`).join('');
+  }catch(e){}
 }
 async function checkConnection(){
   const badge = document.getElementById('connBadge');
@@ -878,6 +896,7 @@ function renderTable(list){
       <td>${p.age}</td>
       <td>${p.gov}</td>
       <td>${p.phone}</td>
+      <td>${p.referrer || '—'}</td>
       <td><span class="tag ${p.procedure}">${fmtProcedure(p.procedure)}</span></td>
       <td><span class="tag ${p.status}">${fmtStatus(p.status)}</span></td>
       <td>${fmtAnesthesia(p.anesthesia)}</td>
@@ -987,6 +1006,7 @@ function startEdit(patient){
   document.getElementById('p_age').value = patient.age;
   document.getElementById('p_phone').value = patient.phone;
   document.getElementById('p_gov').value = patient.gov;
+  document.getElementById('p_referrer').value = patient.referrer || '';
   document.getElementById('p_date').value = patient.date;
   document.getElementById('p_time').value = patient.time;
   document.getElementById('p_polyp').checked = !!patient.polyp;
@@ -1059,6 +1079,7 @@ document.getElementById('bookForm').addEventListener('submit', async (e)=>{
   const age = document.getElementById('p_age').value;
   const phone = document.getElementById('p_phone').value.trim();
   const gov = document.getElementById('p_gov').value;
+  const referrer = document.getElementById('p_referrer').value.trim();
   const date = document.getElementById('p_date').value;
   const time = document.getElementById('p_time').value;
   const polyp = (selProcedure==='colon'||selProcedure==='both') && document.getElementById('p_polyp').checked;
@@ -1075,7 +1096,7 @@ document.getElementById('bookForm').addEventListener('submit', async (e)=>{
     return;
   }
 
-  const payload = { name, age:Number(age), gov, phone, date, time, procedure:selProcedure, status:selStatus, polyp, ward:selWard, anesthesia:selAnesthesia };
+  const payload = { name, age:Number(age), gov, phone, date, time, procedure:selProcedure, status:selStatus, polyp, ward:selWard, anesthesia:selAnesthesia, referrer };
 
   try{
     if(editingId){
@@ -1093,6 +1114,7 @@ document.getElementById('bookForm').addEventListener('submit', async (e)=>{
       selProcedure='gastro'; selStatus='original'; selWard='general'; selAnesthesia='general';
     }
     await renderAll();
+    await refreshReferrerList();
     setTimeout(()=>{ okBox.style.display='none'; }, 2500);
   }catch(err){
     errBox.textContent = err.message || 'حدث خطأ غير متوقع';
@@ -1135,6 +1157,7 @@ function updateClock(){
   await checkConnection();
   document.getElementById('p_date').value = selectedDate;
   await renderAll();
+  await refreshReferrerList();
 })();
 </script>
 </body>

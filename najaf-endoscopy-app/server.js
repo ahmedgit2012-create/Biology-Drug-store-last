@@ -50,14 +50,16 @@ async function initDb() {
       ward TEXT NOT NULL CHECK (ward IN ('general','private')),
       anesthesia TEXT NOT NULL DEFAULT 'general' CHECK (anesthesia IN ('general','local')),
       exam_status TEXT NOT NULL DEFAULT 'pending' CHECK (exam_status IN ('pending','completed','postponed','cancelled')),
+      referrer TEXT NOT NULL DEFAULT '',
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
   `);
-  // Migrations for databases created before 'both' procedure, anesthesia and exam_status existed.
+  // Migrations for databases created before 'both' procedure, anesthesia, exam_status and referrer existed.
   await pool.query(`ALTER TABLE bookings DROP CONSTRAINT IF EXISTS bookings_procedure_check;`);
   await pool.query(`ALTER TABLE bookings ADD CONSTRAINT bookings_procedure_check CHECK (procedure IN ('gastro','colon','both'));`);
   await pool.query(`ALTER TABLE bookings ADD COLUMN IF NOT EXISTS anesthesia TEXT NOT NULL DEFAULT 'general' CHECK (anesthesia IN ('general','local'));`);
   await pool.query(`ALTER TABLE bookings ADD COLUMN IF NOT EXISTS exam_status TEXT NOT NULL DEFAULT 'pending' CHECK (exam_status IN ('pending','completed','postponed','cancelled'));`);
+  await pool.query(`ALTER TABLE bookings ADD COLUMN IF NOT EXISTS referrer TEXT NOT NULL DEFAULT '';`);
   await pool.query(`CREATE INDEX IF NOT EXISTS idx_bookings_date ON bookings(booking_date);`);
 }
 
@@ -75,7 +77,8 @@ function rowToPatient(r) {
     polyp: r.polyp,
     ward: r.ward,
     anesthesia: r.anesthesia,
-    examStatus: r.exam_status
+    examStatus: r.exam_status,
+    referrer: r.referrer
   };
 }
 
@@ -152,9 +155,22 @@ app.get('/api/bookings/counts', async (req, res) => {
   }
 });
 
+// Get the distinct referrer values used before, for the field's autocomplete suggestions
+app.get('/api/referrers', async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT DISTINCT referrer FROM bookings WHERE referrer <> '' ORDER BY referrer ASC`
+    );
+    res.json(rows.map(r => r.referrer));
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
 // Create a booking
 app.post('/api/bookings', async (req, res) => {
-  const { id, name, age, gov, phone, date, time, procedure, status, polyp, ward, anesthesia } = req.body;
+  const { id, name, age, gov, phone, date, time, procedure, status, polyp, ward, anesthesia, referrer } = req.body;
   if (!name || !age || !gov || !phone || !date || !time || !procedure || !status || !ward || !anesthesia) {
     return res.status(400).json({ error: 'الرجاء تعبئة جميع الحقول المطلوبة' });
   }
@@ -179,9 +195,9 @@ app.post('/api/bookings', async (req, res) => {
 
     const newId = id || ('p_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8));
     await pool.query(
-      `INSERT INTO bookings (id, name, age, governorate, phone, booking_date, booking_time, procedure, status, polyp, ward, anesthesia)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
-      [newId, name, age, gov, phone, date, time, procedure, status, !!polyp, ward, anesthesia]
+      `INSERT INTO bookings (id, name, age, governorate, phone, booking_date, booking_time, procedure, status, polyp, ward, anesthesia, referrer)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
+      [newId, name, age, gov, phone, date, time, procedure, status, !!polyp, ward, anesthesia, (referrer || '').trim()]
     );
     res.status(201).json({ ok: true, id: newId });
   } catch (e) {
@@ -193,7 +209,7 @@ app.post('/api/bookings', async (req, res) => {
 // Update a booking (including moving its date/time)
 app.put('/api/bookings/:id', async (req, res) => {
   const { id } = req.params;
-  const { name, age, gov, phone, date, time, procedure, status, polyp, ward, anesthesia } = req.body;
+  const { name, age, gov, phone, date, time, procedure, status, polyp, ward, anesthesia, referrer } = req.body;
   if (!name || !age || !gov || !phone || !date || !time || !procedure || !status || !ward || !anesthesia) {
     return res.status(400).json({ error: 'الرجاء تعبئة جميع الحقول المطلوبة' });
   }
@@ -218,8 +234,8 @@ app.put('/api/bookings/:id', async (req, res) => {
 
     const result = await pool.query(
       `UPDATE bookings SET name=$1, age=$2, governorate=$3, phone=$4, booking_date=$5,
-       booking_time=$6, procedure=$7, status=$8, polyp=$9, ward=$10, anesthesia=$11 WHERE id=$12`,
-      [name, age, gov, phone, date, time, procedure, status, !!polyp, ward, anesthesia, id]
+       booking_time=$6, procedure=$7, status=$8, polyp=$9, ward=$10, anesthesia=$11, referrer=$12 WHERE id=$13`,
+      [name, age, gov, phone, date, time, procedure, status, !!polyp, ward, anesthesia, (referrer || '').trim(), id]
     );
     if (result.rowCount === 0) return res.status(404).json({ error: 'الحجز غير موجود' });
     res.json({ ok: true });
