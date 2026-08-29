@@ -34,6 +34,13 @@ const LIMITS = {
 };
 const TOTAL_LIMIT = 20;
 
+// Specific dates closed entirely (mirrors the frontend's CLOSED_DATES), e.g. a
+// doctor's holiday — keyed by date with the reason returned to the client.
+const CLOSED_DATES = {
+  '2026-10-03': 'عطلة قائمة د. أحمد جاسم الكوفي',
+  '2026-10-10': 'عطلة قائمة د. أحمد جاسم الكوفي'
+};
+
 async function initDb() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS bookings (
@@ -174,6 +181,9 @@ app.post('/api/bookings', async (req, res) => {
   if (!name || !age || !gov || !phone || !date || !time || !procedure || !status || !ward || !anesthesia || !(referrer || '').trim()) {
     return res.status(400).json({ error: 'الرجاء تعبئة جميع الحقول المطلوبة، بما فيها الجهة المحيلة' });
   }
+  if (CLOSED_DATES[date]) {
+    return res.status(409).json({ error: `${CLOSED_DATES[date]}، الرجاء اختيار تاريخ آخر` });
+  }
   try {
     const { rows } = await pool.query(
       'SELECT id, procedure, status, polyp, ward, anesthesia, exam_status FROM bookings WHERE booking_date = $1',
@@ -212,6 +222,9 @@ app.put('/api/bookings/:id', async (req, res) => {
   const { name, age, gov, phone, date, time, procedure, status, polyp, ward, anesthesia, referrer } = req.body;
   if (!name || !age || !gov || !phone || !date || !time || !procedure || !status || !ward || !anesthesia || !(referrer || '').trim()) {
     return res.status(400).json({ error: 'الرجاء تعبئة جميع الحقول المطلوبة، بما فيها الجهة المحيلة' });
+  }
+  if (CLOSED_DATES[date]) {
+    return res.status(409).json({ error: `${CLOSED_DATES[date]}، الرجاء اختيار تاريخ آخر` });
   }
   try {
     const { rows } = await pool.query(

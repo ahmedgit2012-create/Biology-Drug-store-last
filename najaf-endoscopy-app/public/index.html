@@ -659,6 +659,13 @@ const DAYS = [
 ];
 const FRIDAY_DOW = 5;
 
+// Specific dates closed entirely (in addition to every Friday), e.g. a doctor's
+// holiday — keyed by date with a human-readable reason shown to staff.
+const CLOSED_DATES = {
+  '2026-10-03': 'عطلة قائمة د. أحمد جاسم الكوفي',
+  '2026-10-10': 'عطلة قائمة د. أحمد جاسم الكوفي'
+};
+
 const GOVERNORATES = ['النجف الأشرف','بغداد','البصرة','نينوى','أربيل','كربلاء','بابل','ديالى','الأنبار',
   'ذي قار','ميسان','واسط','صلاح الدين','كركوك','القادسية','المثنى','دهوك','السليمانية'];
 
@@ -687,8 +694,9 @@ function dateFromYmd(s){
 function dayMeta(dateStr){
   const d = dateFromYmd(dateStr);
   const dow = d.getDay();
-  if(dow===FRIDAY_DOW) return { closed:true, label:'الجمعة', doctors:[] };
+  if(dow===FRIDAY_DOW) return { closed:true, label:'الجمعة', doctors:[], closedReason:'العيادة مغلقة يوم الجمعة' };
   const info = DAYS.find(x=>x.dow===dow);
+  if(CLOSED_DATES[dateStr]) return { closed:true, label:info.label, doctors:info.doctors, key:info.key, closedReason:CLOSED_DATES[dateStr] };
   return { closed:false, label:info.label, doctors:info.doctors, key:info.key };
 }
 function nextDateForDow(targetDow){
@@ -842,7 +850,7 @@ function renderDoctors(){
   document.getElementById('dayTitle').textContent = `📅 جدول يوم ${meta.label}`;
   const box = document.getElementById('doctorsBox');
   if(meta.closed){
-    box.innerHTML = `<span class="closed-note">العيادة مغلقة يوم الجمعة</span>`;
+    box.innerHTML = `<span class="closed-note">${meta.closedReason}</span>`;
   } else {
     box.innerHTML = meta.doctors.map(doc=>`<span class="doc-chip">👨‍⚕️ ${doc}</span>`).join('');
   }
@@ -971,7 +979,7 @@ function renderForm(counts){
   if(editingId){
     btn.textContent = 'حفظ التعديل';
   } else {
-    btn.textContent = meta.closed ? 'العيادة مغلقة هذا اليوم' : (dayFull ? 'اليوم مكتمل (٢٠/٢٠)' : 'تأكيد الحجز');
+    btn.textContent = meta.closed ? (meta.closedReason || 'العيادة مغلقة هذا اليوم') : (dayFull ? 'اليوم مكتمل (٢٠/٢٠)' : 'تأكيد الحجز');
   }
 }
 
@@ -1091,7 +1099,7 @@ document.getElementById('bookForm').addEventListener('submit', async (e)=>{
   }
   const meta = dayMeta(date);
   if(meta.closed){
-    errBox.textContent = 'العيادة مغلقة يوم الجمعة، الرجاء اختيار تاريخ آخر';
+    errBox.textContent = `${meta.closedReason}، الرجاء اختيار تاريخ آخر`;
     errBox.style.display='block';
     return;
   }
