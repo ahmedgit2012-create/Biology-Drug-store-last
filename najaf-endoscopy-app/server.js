@@ -56,7 +56,7 @@ async function initDb() {
       polyp BOOLEAN NOT NULL DEFAULT false,
       ward TEXT NOT NULL CHECK (ward IN ('general','private')),
       anesthesia TEXT NOT NULL DEFAULT 'general' CHECK (anesthesia IN ('general','local')),
-      exam_status TEXT NOT NULL DEFAULT 'pending' CHECK (exam_status IN ('pending','completed','postponed','cancelled')),
+      exam_status TEXT NOT NULL DEFAULT 'pending' CHECK (exam_status IN ('pending','completed','postponed','cancelled','no_show')),
       referrer TEXT NOT NULL DEFAULT '',
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
@@ -65,7 +65,9 @@ async function initDb() {
   await pool.query(`ALTER TABLE bookings DROP CONSTRAINT IF EXISTS bookings_procedure_check;`);
   await pool.query(`ALTER TABLE bookings ADD CONSTRAINT bookings_procedure_check CHECK (procedure IN ('gastro','colon','both'));`);
   await pool.query(`ALTER TABLE bookings ADD COLUMN IF NOT EXISTS anesthesia TEXT NOT NULL DEFAULT 'general' CHECK (anesthesia IN ('general','local'));`);
-  await pool.query(`ALTER TABLE bookings ADD COLUMN IF NOT EXISTS exam_status TEXT NOT NULL DEFAULT 'pending' CHECK (exam_status IN ('pending','completed','postponed','cancelled'));`);
+  await pool.query(`ALTER TABLE bookings ADD COLUMN IF NOT EXISTS exam_status TEXT NOT NULL DEFAULT 'pending' CHECK (exam_status IN ('pending','completed','postponed','cancelled','no_show'));`);
+  await pool.query(`ALTER TABLE bookings DROP CONSTRAINT IF EXISTS bookings_exam_status_check;`);
+  await pool.query(`ALTER TABLE bookings ADD CONSTRAINT bookings_exam_status_check CHECK (exam_status IN ('pending','completed','postponed','cancelled','no_show'));`);
   await pool.query(`ALTER TABLE bookings ADD COLUMN IF NOT EXISTS referrer TEXT NOT NULL DEFAULT '';`);
   await pool.query(`CREATE INDEX IF NOT EXISTS idx_bookings_date ON bookings(booking_date);`);
 }
@@ -263,7 +265,7 @@ app.put('/api/bookings/:id', async (req, res) => {
 app.patch('/api/bookings/:id/exam-status', async (req, res) => {
   const { id } = req.params;
   const { examStatus } = req.body;
-  const allowed = ['pending', 'completed', 'postponed', 'cancelled'];
+  const allowed = ['pending', 'completed', 'postponed', 'cancelled', 'no_show'];
   if (!allowed.includes(examStatus)) {
     return res.status(400).json({ error: 'حالة فحص غير صالحة' });
   }
