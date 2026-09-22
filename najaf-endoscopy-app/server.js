@@ -37,8 +37,7 @@ const TOTAL_LIMIT = 20;
 // Specific dates closed entirely (mirrors the frontend's CLOSED_DATES), e.g. a
 // doctor's holiday — keyed by date with the reason returned to the client.
 const CLOSED_DATES = {
-  '2026-10-03': 'عطلة قائمة د. أحمد جاسم الكوفي',
-  '2026-10-10': 'عطلة قائمة د. أحمد جاسم الكوفي'
+  '2026-10-03': 'عطلة قائمة د. أحمد جاسم الكوفي'
 };
 
 async function initDb() {
