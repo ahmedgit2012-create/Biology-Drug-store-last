@@ -25,14 +25,30 @@ const pool = new Pool({
 });
 
 // --- Capacity rules (mirrors the frontend) ---
-const LIMITS = {
+// Starting 2027-01-01 the daily total drops from 20 to 15, with every
+// procedure category reduced by the same 25% (ward_general is unchanged).
+// Dates before that keep the original 2026 limits.
+const LIMITS_2026 = {
   gastro_original: 8,
   gastro_reserve: 4,
   colon_original: 4,
   colon_reserve: 4,
   ward_general: 3
 };
-const TOTAL_LIMIT = 20;
+const LIMITS_2027 = {
+  gastro_original: 6,
+  gastro_reserve: 3,
+  colon_original: 3,
+  colon_reserve: 3,
+  ward_general: 3
+};
+const LIMITS_CUTOVER_DATE = '2027-01-01';
+function limitsForDate(dateStr) {
+  return dateStr >= LIMITS_CUTOVER_DATE ? LIMITS_2027 : LIMITS_2026;
+}
+function totalLimitForDate(dateStr) {
+  return dateStr >= LIMITS_CUTOVER_DATE ? 15 : 20;
+}
 
 // Specific dates closed entirely (mirrors the frontend's CLOSED_DATES), e.g. a
 // doctor's holiday — keyed by date with the reason returned to the client.
@@ -57,10 +73,11 @@ async function initDb() {
       anesthesia TEXT NOT NULL DEFAULT 'general' CHECK (anesthesia IN ('general','local')),
       exam_status TEXT NOT NULL DEFAULT 'pending' CHECK (exam_status IN ('pending','completed','postponed','cancelled','no_show')),
       referrer TEXT NOT NULL DEFAULT '',
+      extra_reserve BOOLEAN NOT NULL DEFAULT false,
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
   `);
-  // Migrations for databases created before 'both' procedure, anesthesia, exam_status and referrer existed.
+  // Migrations for databases created before 'both' procedure, anesthesia, exam_status, referrer and extra_reserve existed.
   await pool.query(`ALTER TABLE bookings DROP CONSTRAINT IF EXISTS bookings_procedure_check;`);
   await pool.query(`ALTER TABLE bookings ADD CONSTRAINT bookings_procedure_check CHECK (procedure IN ('gastro','colon','both'));`);
   await pool.query(`ALTER TABLE bookings ADD COLUMN IF NOT EXISTS anesthesia TEXT NOT NULL DEFAULT 'general' CHECK (anesthesia IN ('general','local'));`);
@@ -68,6 +85,7 @@ async function initDb() {
   await pool.query(`ALTER TABLE bookings DROP CONSTRAINT IF EXISTS bookings_exam_status_check;`);
   await pool.query(`ALTER TABLE bookings ADD CONSTRAINT bookings_exam_status_check CHECK (exam_status IN ('pending','completed','postponed','cancelled','no_show'));`);
   await pool.query(`ALTER TABLE bookings ADD COLUMN IF NOT EXISTS referrer TEXT NOT NULL DEFAULT '';`);
+  await pool.query(`ALTER TABLE bookings ADD COLUMN IF NOT EXISTS extra_reserve BOOLEAN NOT NULL DEFAULT false;`);
   await pool.query(`CREATE INDEX IF NOT EXISTS idx_bookings_date ON bookings(booking_date);`);
 }
 
@@ -86,16 +104,19 @@ function rowToPatient(r) {
     ward: r.ward,
     anesthesia: r.anesthesia,
     examStatus: r.exam_status,
-    referrer: r.referrer
+    referrer: r.referrer,
+    extraReserve: r.extra_reserve
   };
 }
 
 // Note: the combined 'both' procedure has no dedicated capacity key on
-// purpose — it only counts toward the daily total (TOTAL_LIMIT), and counts
-// as 2 patients there (it uses two procedure slots, gastro + colon).
+// purpose — it only counts toward the daily total, and counts as 2 patients
+// there (it uses two procedure slots, gastro + colon).
 // The 3-slot cap applies only to general anesthesia + general ward together;
 // local anesthesia in the general ward, and the private ward, are both open.
 // Postponed/cancelled bookings free their slot: they're excluded from every count.
+// Extra-reserve bookings (private-ward-only overflow list) are excluded from
+// every count too — they never compete for the capped daily/category slots.
 function totalWeight(procedure) {
   return procedure === 'both' ? 2 : 1;
 }
@@ -109,6 +130,7 @@ function computeCounts(list, excludeId) {
   list.forEach(p => {
     if (excludeId && p.id === excludeId) return;
     if (p.examStatus === 'postponed' || p.examStatus === 'cancelled') return;
+    if (p.extraReserve) return;
     c.total += totalWeight(p.procedure);
     if (p.procedure === 'gastro') {
       c[p.status === 'original' ? 'gastro_original' : 'gastro_reserve']++;
@@ -149,7 +171,7 @@ app.get('/api/bookings/counts', async (req, res) => {
   try {
     const { rows } = await pool.query(
       `SELECT booking_date, SUM(CASE WHEN procedure='both' THEN 2 ELSE 1 END) AS cnt FROM bookings
-       WHERE booking_date = ANY($1::date[]) AND exam_status NOT IN ('postponed','cancelled')
+       WHERE booking_date = ANY($1::date[]) AND exam_status NOT IN ('postponed','cancelled') AND NOT extra_reserve
        GROUP BY booking_date`,
       [dates]
     );
@@ -178,37 +200,44 @@ app.get('/api/referrers', async (req, res) => {
 
 // Create a booking
 app.post('/api/bookings', async (req, res) => {
-  const { id, name, age, gov, phone, date, time, procedure, status, polyp, ward, anesthesia, referrer } = req.body;
+  const { id, name, age, gov, phone, date, time, procedure, status, polyp, ward, anesthesia, referrer, extraReserve } = req.body;
   if (!name || !age || !gov || !phone || !date || !time || !procedure || !status || !ward || !anesthesia || !(referrer || '').trim()) {
     return res.status(400).json({ error: 'الرجاء تعبئة جميع الحقول المطلوبة، بما فيها الجهة المحيلة' });
   }
   if (CLOSED_DATES[date]) {
     return res.status(409).json({ error: `${CLOSED_DATES[date]}، الرجاء اختيار تاريخ آخر` });
   }
+  // Extra-reserve bookings are a private-ward-only overflow list, exempt from
+  // every capacity cap — the ward is forced to private regardless of what was submitted.
+  const effectiveWard = extraReserve ? 'private' : ward;
   try {
-    const { rows } = await pool.query(
-      'SELECT id, procedure, status, polyp, ward, anesthesia, exam_status FROM bookings WHERE booking_date = $1',
-      [date]
-    );
-    const existing = rows.map(r => ({ id: r.id, procedure: r.procedure, status: r.status, polyp: r.polyp, ward: r.ward, anesthesia: r.anesthesia, examStatus: r.exam_status }));
-    const counts = computeCounts(existing);
-    const key = `${procedure}_${status}`;
+    if (!extraReserve) {
+      const { rows } = await pool.query(
+        'SELECT id, procedure, status, polyp, ward, anesthesia, exam_status, extra_reserve FROM bookings WHERE booking_date = $1',
+        [date]
+      );
+      const existing = rows.map(r => ({ id: r.id, procedure: r.procedure, status: r.status, polyp: r.polyp, ward: r.ward, anesthesia: r.anesthesia, examStatus: r.exam_status, extraReserve: r.extra_reserve }));
+      const counts = computeCounts(existing);
+      const LIMITS = limitsForDate(date);
+      const TOTAL_LIMIT = totalLimitForDate(date);
+      const key = `${procedure}_${status}`;
 
-    if (counts.total + totalWeight(procedure) > TOTAL_LIMIT) {
-      return res.status(409).json({ error: 'اكتمل العدد الكلي لهذا اليوم (٢٠ مريضاً)' });
-    }
-    if (counts[key] >= LIMITS[key]) {
-      return res.status(409).json({ error: 'اكتملت هذه الفئة من الحجوزات لهذا اليوم' });
-    }
-    if (ward === 'general' && anesthesia === 'general' && counts.general_anesthesia_general_ward >= LIMITS.ward_general) {
-      return res.status(409).json({ error: 'سقف التخدير العام في الجناح العام مكتمل (٣/٣)، الرجاء اختيار الجناح الخاص أو التخدير الموضعي' });
+      if (counts.total + totalWeight(procedure) > TOTAL_LIMIT) {
+        return res.status(409).json({ error: `اكتمل العدد الكلي لهذا اليوم (${TOTAL_LIMIT} مريضاً)` });
+      }
+      if (counts[key] >= LIMITS[key]) {
+        return res.status(409).json({ error: 'اكتملت هذه الفئة من الحجوزات لهذا اليوم' });
+      }
+      if (effectiveWard === 'general' && anesthesia === 'general' && counts.general_anesthesia_general_ward >= LIMITS.ward_general) {
+        return res.status(409).json({ error: 'سقف التخدير العام في الجناح العام مكتمل (٣/٣)، الرجاء اختيار الجناح الخاص أو التخدير الموضعي' });
+      }
     }
 
     const newId = id || ('p_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8));
     await pool.query(
-      `INSERT INTO bookings (id, name, age, governorate, phone, booking_date, booking_time, procedure, status, polyp, ward, anesthesia, referrer)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
-      [newId, name, age, gov, phone, date, time, procedure, status, !!polyp, ward, anesthesia, (referrer || '').trim()]
+      `INSERT INTO bookings (id, name, age, governorate, phone, booking_date, booking_time, procedure, status, polyp, ward, anesthesia, referrer, extra_reserve)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`,
+      [newId, name, age, gov, phone, date, time, procedure, status, !!polyp, effectiveWard, anesthesia, (referrer || '').trim(), !!extraReserve]
     );
     res.status(201).json({ ok: true, id: newId });
   } catch (e) {
@@ -220,36 +249,41 @@ app.post('/api/bookings', async (req, res) => {
 // Update a booking (including moving its date/time)
 app.put('/api/bookings/:id', async (req, res) => {
   const { id } = req.params;
-  const { name, age, gov, phone, date, time, procedure, status, polyp, ward, anesthesia, referrer } = req.body;
+  const { name, age, gov, phone, date, time, procedure, status, polyp, ward, anesthesia, referrer, extraReserve } = req.body;
   if (!name || !age || !gov || !phone || !date || !time || !procedure || !status || !ward || !anesthesia || !(referrer || '').trim()) {
     return res.status(400).json({ error: 'الرجاء تعبئة جميع الحقول المطلوبة، بما فيها الجهة المحيلة' });
   }
   if (CLOSED_DATES[date]) {
     return res.status(409).json({ error: `${CLOSED_DATES[date]}، الرجاء اختيار تاريخ آخر` });
   }
+  const effectiveWard = extraReserve ? 'private' : ward;
   try {
-    const { rows } = await pool.query(
-      'SELECT id, procedure, status, polyp, ward, anesthesia, exam_status FROM bookings WHERE booking_date = $1',
-      [date]
-    );
-    const existing = rows.map(r => ({ id: r.id, procedure: r.procedure, status: r.status, polyp: r.polyp, ward: r.ward, anesthesia: r.anesthesia, examStatus: r.exam_status }));
-    const counts = computeCounts(existing, id);
-    const key = `${procedure}_${status}`;
+    if (!extraReserve) {
+      const { rows } = await pool.query(
+        'SELECT id, procedure, status, polyp, ward, anesthesia, exam_status, extra_reserve FROM bookings WHERE booking_date = $1',
+        [date]
+      );
+      const existing = rows.map(r => ({ id: r.id, procedure: r.procedure, status: r.status, polyp: r.polyp, ward: r.ward, anesthesia: r.anesthesia, examStatus: r.exam_status, extraReserve: r.extra_reserve }));
+      const counts = computeCounts(existing, id);
+      const LIMITS = limitsForDate(date);
+      const TOTAL_LIMIT = totalLimitForDate(date);
+      const key = `${procedure}_${status}`;
 
-    if (counts.total + totalWeight(procedure) > TOTAL_LIMIT) {
-      return res.status(409).json({ error: 'اكتمل العدد الكلي لهذا اليوم (٢٠ مريضاً)' });
-    }
-    if (counts[key] >= LIMITS[key]) {
-      return res.status(409).json({ error: 'اكتملت هذه الفئة من الحجوزات لهذا اليوم' });
-    }
-    if (ward === 'general' && anesthesia === 'general' && counts.general_anesthesia_general_ward >= LIMITS.ward_general) {
-      return res.status(409).json({ error: 'سقف التخدير العام في الجناح العام مكتمل (٣/٣)، الرجاء اختيار الجناح الخاص أو التخدير الموضعي' });
+      if (counts.total + totalWeight(procedure) > TOTAL_LIMIT) {
+        return res.status(409).json({ error: `اكتمل العدد الكلي لهذا اليوم (${TOTAL_LIMIT} مريضاً)` });
+      }
+      if (counts[key] >= LIMITS[key]) {
+        return res.status(409).json({ error: 'اكتملت هذه الفئة من الحجوزات لهذا اليوم' });
+      }
+      if (effectiveWard === 'general' && anesthesia === 'general' && counts.general_anesthesia_general_ward >= LIMITS.ward_general) {
+        return res.status(409).json({ error: 'سقف التخدير العام في الجناح العام مكتمل (٣/٣)، الرجاء اختيار الجناح الخاص أو التخدير الموضعي' });
+      }
     }
 
     const result = await pool.query(
       `UPDATE bookings SET name=$1, age=$2, governorate=$3, phone=$4, booking_date=$5,
-       booking_time=$6, procedure=$7, status=$8, polyp=$9, ward=$10, anesthesia=$11, referrer=$12 WHERE id=$13`,
-      [name, age, gov, phone, date, time, procedure, status, !!polyp, ward, anesthesia, (referrer || '').trim(), id]
+       booking_time=$6, procedure=$7, status=$8, polyp=$9, ward=$10, anesthesia=$11, referrer=$12, extra_reserve=$13 WHERE id=$14`,
+      [name, age, gov, phone, date, time, procedure, status, !!polyp, effectiveWard, anesthesia, (referrer || '').trim(), !!extraReserve, id]
     );
     if (result.rowCount === 0) return res.status(404).json({ error: 'الحجز غير موجود' });
     res.json({ ok: true });

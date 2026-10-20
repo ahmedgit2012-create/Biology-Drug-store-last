@@ -604,6 +604,11 @@ tr.exam-no_show td{background:#DFF1E7;}
           </div>
         </div>
 
+        <div class="polyp-row" style="margin-top:12px;">
+          <input type="checkbox" id="p_extraReserve">
+          <label for="p_extraReserve">حجز ضمن قائمة الاحتياط الإضافية (الجناح الخاص — بلا سقف)</label>
+        </div>
+
         <button type="submit" class="submit-btn" id="submitBtn">تأكيد الحجز</button>
         <div class="err-msg" id="errMsg"></div>
         <div class="ok-msg" id="okMsg">تم تسجيل الحجز بنجاح ✓</div>
@@ -644,7 +649,8 @@ tr.exam-no_show td{background:#DFF1E7;}
   </div>
 
   <div class="foot-note">
-    السعة اليومية الكلية: ٢٠ مريضاً — منظار المعدة ١٢ (٨ أصلاء + ٤ احتياط) · منظار القولون ٨ (٤ أصلاء + ٤ احتياط) · منظار معدة وقولون معًا: بلا سقف خاص به، لكنه يُحتسب مريضين اثنين من الإجمالي الكلي (٢٠) · التخدير العام في الجناح العام: ٣ فقط، وأي حالة أخرى (تخدير موضعي في الجناح العام، أو أي تخدير في الجناح الخاص) مفتوحة بلا سقف.<br>
+    السعة اليومية الكلية حتى نهاية ٢٠٢٦: ٢٠ مريضاً — منظار المعدة ١٢ (٨ أصلاء + ٤ احتياط) · منظار القولون ٨ (٤ أصلاء + ٤ احتياط). اعتبارًا من ١ يناير ٢٠٢٧ تصبح السعة الكلية ١٥ مريضًا — منظار المعدة ٩ (٦ أصلاء + ٣ احتياط) · منظار القولون ٦ (٣ أصلاء + ٣ احتياط). منظار معدة وقولون معًا: بلا سقف خاص به، لكنه يُحتسب مريضين اثنين من الإجمالي الكلي · التخدير العام في الجناح العام: ٣ فقط، وأي حالة أخرى (تخدير موضعي في الجناح العام، أو أي تخدير في الجناح الخاص) مفتوحة بلا سقف.<br>
+    قائمة الاحتياط الإضافية: حقل اختياري بالنموذج، يُقفل الجناح تلقائيًا على "الخاص" ولا يُحتسب ضمن أي سقف — سعة مفتوحة دائمًا.<br>
     يمكن تغيير تاريخ ووقت أي حجز لاحقاً بالضغط على أيقونة التعديل ✎ في القائمة. هذه البيانات محفوظة في قاعدة بيانات حقيقية ومشتركة بين كل من يفتح هذا الرابط.<br>
     حالة الفحص (في القائمة): "مكتمل" لتوثيق إنجاز الفحص، أما "مؤجل" و"ملغى" فيحرّران مكان المريض فوراً من كل حسابات السعة لذلك اليوم ليصبح متاحاً لمريض آخر.
   </div>
@@ -670,8 +676,14 @@ const CLOSED_DATES = {
 const GOVERNORATES = ['النجف الأشرف','بغداد','البصرة','نينوى','أربيل','كربلاء','بابل','ديالى','الأنبار',
   'ذي قار','ميسان','واسط','صلاح الدين','كركوك','القادسية','المثنى','دهوك','السليمانية'];
 
-const LIMITS = { gastro_original:8, gastro_reserve:4, colon_original:4, colon_reserve:4, ward_general:3 };
-const TOTAL_LIMIT = 20;
+// Starting 2027-01-01 the daily total drops from 20 to 15, with every
+// procedure category reduced by the same 25% (ward_general is unchanged).
+// Dates before that keep the original 2026 limits.
+const LIMITS_2026 = { gastro_original:8, gastro_reserve:4, colon_original:4, colon_reserve:4, ward_general:3 };
+const LIMITS_2027 = { gastro_original:6, gastro_reserve:3, colon_original:3, colon_reserve:3, ward_general:3 };
+const LIMITS_CUTOVER_DATE = '2027-01-01';
+function limitsForDate(dateStr){ return dateStr>=LIMITS_CUTOVER_DATE ? LIMITS_2027 : LIMITS_2026; }
+function totalLimitForDate(dateStr){ return dateStr>=LIMITS_CUTOVER_DATE ? 15 : 20; }
 
 let selectedDate = ymd(new Date());
 let currentList = [];
@@ -680,6 +692,7 @@ let selProcedure = 'gastro';
 let selStatus = 'original';
 let selWard = 'general';
 let selAnesthesia = 'general';
+let selExtraReserve = false;
 let editingId = null;
 let editingOrigDate = null;
 
@@ -779,17 +792,20 @@ async function checkConnection(){
 
 // ---------- helpers ----------
 // Note: the combined 'both' procedure has no dedicated capacity key on
-// purpose — it only counts toward the daily total (TOTAL_LIMIT), and counts
-// as 2 patients there (it uses two procedure slots, gastro + colon).
+// purpose — it only counts toward the daily total, and counts as 2 patients
+// there (it uses two procedure slots, gastro + colon).
 // The 3-slot cap applies only to general anesthesia + general ward together;
 // local anesthesia in the general ward, and the private ward, are both open.
 // Postponed/cancelled bookings free their slot: they're excluded from every count.
+// Extra-reserve bookings (private-ward-only overflow list) are excluded from
+// every count too — they never compete for the capped daily/category slots.
 function totalWeight(procedure){ return procedure==='both' ? 2 : 1; }
 function computeCounts(list, excludeId){
-  const c = { gastro_original:0, gastro_reserve:0, colon_original:0, colon_reserve:0, both_original:0, both_reserve:0, colon_polyp:0, ward_general:0, ward_private:0, general_anesthesia_general_ward:0, total:0 };
+  const c = { gastro_original:0, gastro_reserve:0, colon_original:0, colon_reserve:0, both_original:0, both_reserve:0, colon_polyp:0, ward_general:0, ward_private:0, general_anesthesia_general_ward:0, extraReserveCount:0, total:0 };
   list.forEach(p=>{
     if(excludeId && p.id===excludeId) return;
     if(p.examStatus==='postponed' || p.examStatus==='cancelled') return;
+    if(p.extraReserve){ c.extraReserveCount++; return; }
     c.total += totalWeight(p.procedure);
     if(p.procedure==='gastro'){ c[p.status==='original'?'gastro_original':'gastro_reserve']++; }
     else if(p.procedure==='colon'){ c[p.status==='original'?'colon_original':'colon_reserve']++; }
@@ -834,7 +850,7 @@ function renderDayTabs(){
     return `<div class="day-tab ${active}" data-dow="${d.dow}">
       <div class="d-name">${d.label}</div>
       <div class="d-doc">${d.doctors.join(' · ')}</div>
-      <div class="d-count">${count}/${TOTAL_LIMIT}</div>
+      <div class="d-count">${count}/${totalLimitForDate(targetDate)}</div>
     </div>`;
   }).join('');
   box.querySelectorAll('.day-tab').forEach(el=>{
@@ -857,6 +873,8 @@ function renderDoctors(){
   }
 }
 function renderGauges(counts){
+  const LIMITS = limitsForDate(selectedDate);
+  const TOTAL_LIMIT = totalLimitForDate(selectedDate);
   const items = [
     { label:'منظار المعدة - أصلاء', val:counts.gastro_original, max:LIMITS.gastro_original, color:'#3FA88C' },
     { label:'منظار المعدة - احتياط', val:counts.gastro_reserve, max:LIMITS.gastro_reserve, color:'#E0A93F' },
@@ -874,6 +892,7 @@ function renderGauges(counts){
   `).join('');
 }
 function renderWardStrip(counts){
+  const LIMITS = limitsForDate(selectedDate);
   const gFull = counts.general_anesthesia_general_ward >= LIMITS.ward_general;
   document.getElementById('wardStrip').innerHTML = `
     <div class="ward-box ${gFull?'full':''}">
@@ -885,6 +904,11 @@ function renderWardStrip(counts){
       <div class="wt">الجناح الخاص</div>
       <div class="wv">${counts.ward_private}</div>
       <div class="wo">سعة مفتوحة (بلا حد أقصى)</div>
+    </div>
+    <div class="ward-box">
+      <div class="wt">قائمة الاحتياط الإضافية</div>
+      <div class="wv">${counts.extraReserveCount}</div>
+      <div class="wo">الجناح الخاص فقط — سعة مفتوحة (بلا سقف)</div>
     </div>
   `;
 }
@@ -909,7 +933,7 @@ function renderTable(list){
       <td><span class="tag ${p.procedure}">${fmtProcedure(p.procedure)}</span></td>
       <td><span class="tag ${p.status}">${fmtStatus(p.status)}</span></td>
       <td>${fmtAnesthesia(p.anesthesia)}</td>
-      <td>${fmtWard(p.ward)}</td>
+      <td>${fmtWard(p.ward)}${p.extraReserve?' <span class="tag both">احتياط إضافي</span>':''}</td>
       <td>
         <select class="exam-status-sel exam-${p.examStatus}" data-id="${p.id}" title="لا يُحتسب ضمن السعة عند التأجيل أو الإلغاء">
           ${Object.entries(EXAM_STATUS_LABELS).map(([val,label])=>
@@ -954,18 +978,25 @@ function renderTable(list){
   });
 }
 function renderForm(counts){
+  const limitDate = document.getElementById('p_date').value || selectedDate;
+  const LIMITS = limitsForDate(limitDate);
+  const TOTAL_LIMIT = totalLimitForDate(limitDate);
   document.querySelectorAll('#segProcedure button').forEach(b=>{
     b.classList.toggle('sel', b.dataset.val===selProcedure);
   });
   document.querySelectorAll('#segStatus button').forEach(b=>{
     b.classList.toggle('sel', b.dataset.val===selStatus);
     const key = selProcedure + '_' + b.dataset.val;
-    b.disabled = counts[key] >= LIMITS[key];
+    b.disabled = !selExtraReserve && counts[key] >= LIMITS[key];
   });
   document.querySelectorAll('#segWard button').forEach(b=>{
     b.classList.toggle('sel', b.dataset.val===selWard);
-    if(b.dataset.val==='general'){
+    if(selExtraReserve){
+      b.disabled = true;
+    } else if(b.dataset.val==='general'){
       b.disabled = selAnesthesia==='general' && counts.general_anesthesia_general_ward >= LIMITS.ward_general;
+    } else {
+      b.disabled = false;
     }
   });
   document.querySelectorAll('#segAnesthesia button').forEach(b=>{
@@ -973,14 +1004,14 @@ function renderForm(counts){
   });
   document.getElementById('polypWrap').style.display = (selProcedure==='colon'||selProcedure==='both') ? 'block' : 'none';
 
-  const meta = dayMeta(document.getElementById('p_date').value || selectedDate);
-  const dayFull = counts.total + totalWeight(selProcedure) > TOTAL_LIMIT;
+  const meta = dayMeta(limitDate);
+  const dayFull = !selExtraReserve && (counts.total + totalWeight(selProcedure) > TOTAL_LIMIT);
   const btn = document.getElementById('submitBtn');
   btn.disabled = dayFull || meta.closed;
   if(editingId){
     btn.textContent = 'حفظ التعديل';
   } else {
-    btn.textContent = meta.closed ? (meta.closedReason || 'العيادة مغلقة هذا اليوم') : (dayFull ? 'اليوم مكتمل (٢٠/٢٠)' : 'تأكيد الحجز');
+    btn.textContent = meta.closed ? (meta.closedReason || 'العيادة مغلقة هذا اليوم') : (dayFull ? `اليوم مكتمل (${TOTAL_LIMIT}/${TOTAL_LIMIT})` : 'تأكيد الحجز');
   }
 }
 
@@ -1019,10 +1050,12 @@ function startEdit(patient){
   document.getElementById('p_date').value = patient.date;
   document.getElementById('p_time').value = patient.time;
   document.getElementById('p_polyp').checked = !!patient.polyp;
+  document.getElementById('p_extraReserve').checked = !!patient.extraReserve;
   selProcedure = patient.procedure;
   selStatus = patient.status;
   selWard = patient.ward;
   selAnesthesia = patient.anesthesia;
+  selExtraReserve = !!patient.extraReserve;
   document.getElementById('editBanner').style.display = 'flex';
   document.getElementById('okMsg').style.display='none';
   document.getElementById('errMsg').style.display='none';
@@ -1035,7 +1068,7 @@ function cancelEdit(){
   editingOrigDate = null;
   document.getElementById('editBanner').style.display = 'none';
   document.getElementById('bookForm').reset();
-  selProcedure='gastro'; selStatus='original'; selWard='general'; selAnesthesia='general';
+  selProcedure='gastro'; selStatus='original'; selWard='general'; selAnesthesia='general'; selExtraReserve=false;
 }
 document.getElementById('cancelEditBtn').addEventListener('click', async ()=>{ cancelEdit(); await renderAll(); });
 
@@ -1059,6 +1092,11 @@ document.getElementById('segWard').addEventListener('click', e=>{
 document.getElementById('segAnesthesia').addEventListener('click', e=>{
   const btn = e.target.closest('button'); if(!btn) return;
   selAnesthesia = btn.dataset.val;
+  refreshFormOnly();
+});
+document.getElementById('p_extraReserve').addEventListener('change', e=>{
+  selExtraReserve = e.target.checked;
+  if(selExtraReserve) selWard = 'private';
   refreshFormOnly();
 });
 document.getElementById('p_date').addEventListener('change', async e=>{
@@ -1105,7 +1143,7 @@ document.getElementById('bookForm').addEventListener('submit', async (e)=>{
     return;
   }
 
-  const payload = { name, age:Number(age), gov, phone, date, time, procedure:selProcedure, status:selStatus, polyp, ward:selWard, anesthesia:selAnesthesia, referrer };
+  const payload = { name, age:Number(age), gov, phone, date, time, procedure:selProcedure, status:selStatus, polyp, ward:selWard, anesthesia:selAnesthesia, referrer, extraReserve:selExtraReserve };
 
   try{
     if(editingId){
@@ -1120,7 +1158,7 @@ document.getElementById('bookForm').addEventListener('submit', async (e)=>{
       okBox.style.display='block';
       document.getElementById('bookForm').reset();
       document.getElementById('p_gov').value = gov;
-      selProcedure='gastro'; selStatus='original'; selWard='general'; selAnesthesia='general';
+      selProcedure='gastro'; selStatus='original'; selWard='general'; selAnesthesia='general'; selExtraReserve=false;
     }
     await renderAll();
     await refreshReferrerList();
