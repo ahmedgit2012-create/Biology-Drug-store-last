@@ -652,7 +652,8 @@ tr.exam-no_show td{background:#DFF1E7;}
     السعة اليومية الكلية حتى نهاية ٢٠٢٦: ٢٠ مريضاً — منظار المعدة ١٢ (٨ أصلاء + ٤ احتياط) · منظار القولون ٨ (٤ أصلاء + ٤ احتياط). اعتبارًا من ١ يناير ٢٠٢٧ تصبح السعة الكلية ١٥ مريضًا — منظار المعدة ٩ (٦ أصلاء + ٣ احتياط) · منظار القولون ٦ (٣ أصلاء + ٣ احتياط). منظار معدة وقولون معًا: بلا سقف خاص به، لكنه يُحتسب مريضين اثنين من الإجمالي الكلي · التخدير العام في الجناح العام: ٣ فقط، وأي حالة أخرى (تخدير موضعي في الجناح العام، أو أي تخدير في الجناح الخاص) مفتوحة بلا سقف.<br>
     قائمة الاحتياط الإضافية: حقل اختياري بالنموذج، يُقفل الجناح تلقائيًا على "الخاص" ولا يُحتسب ضمن أي سقف — سعة مفتوحة دائمًا.<br>
     يمكن تغيير تاريخ ووقت أي حجز لاحقاً بالضغط على أيقونة التعديل ✎ في القائمة. هذه البيانات محفوظة في قاعدة بيانات حقيقية ومشتركة بين كل من يفتح هذا الرابط.<br>
-    حالة الفحص (في القائمة): "مكتمل" لتوثيق إنجاز الفحص، أما "مؤجل" و"ملغى" فيحرّران مكان المريض فوراً من كل حسابات السعة لذلك اليوم ليصبح متاحاً لمريض آخر.
+    حالة الفحص (في القائمة): "مكتمل" لتوثيق إنجاز الفحص، أما "مؤجل" و"ملغى" فيحرّران مكان المريض فوراً من كل حسابات السعة لذلك اليوم ليصبح متاحاً لمريض آخر.<br>
+    إذا كان رقم هاتف المريض مسجّلاً سابقاً بحالة "لم يتواجد بيوم الفحص"، يظهر تنبيه يطلب تأكيد الموافقة قبل حجز موعد جديد له (لا يظهر عند تعديل حجز موجود).
   </div>
 </div>
 
@@ -778,6 +779,13 @@ async function refreshReferrerList(){
     const referrers = await apiGetReferrers();
     document.getElementById('referrerList').innerHTML = referrers.map(r=>`<option value="${r}"></option>`).join('');
   }catch(e){}
+}
+async function apiCheckNoShow(phone){
+  try{
+    const r = await fetch(`${API}/patients/no-show-check?phone=${encodeURIComponent(phone)}`);
+    if(!r.ok) return { hasNoShow:false };
+    return r.json();
+  }catch(e){ return { hasNoShow:false }; }
 }
 async function checkConnection(){
   const badge = document.getElementById('connBadge');
@@ -1141,6 +1149,14 @@ document.getElementById('bookForm').addEventListener('submit', async (e)=>{
     errBox.textContent = `${meta.closedReason}، الرجاء اختيار تاريخ آخر`;
     errBox.style.display='block';
     return;
+  }
+
+  if(!editingId){
+    const noShow = await apiCheckNoShow(phone);
+    if(noShow.hasNoShow){
+      const approved = confirm(`تنبيه: هذا المريض (${phone}) مسجّل سابقاً بحالة "لم يتواجد بيوم الفحص". هل توافق على حجز موعد جديد له؟`);
+      if(!approved) return;
+    }
   }
 
   const payload = { name, age:Number(age), gov, phone, date, time, procedure:selProcedure, status:selStatus, polyp, ward:selWard, anesthesia:selAnesthesia, referrer, extraReserve:selExtraReserve };

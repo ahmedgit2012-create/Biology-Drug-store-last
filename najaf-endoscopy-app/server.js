@@ -198,6 +198,24 @@ app.get('/api/referrers', async (req, res) => {
   }
 });
 
+// Check whether a phone number has any prior "no-show" booking on record,
+// so the UI can require staff confirmation before booking them again.
+app.get('/api/patients/no-show-check', async (req, res) => {
+  const phone = (req.query.phone || '').trim();
+  if (!phone) return res.json({ hasNoShow: false, count: 0 });
+  try {
+    const { rows } = await pool.query(
+      `SELECT COUNT(*) AS cnt FROM bookings WHERE phone = $1 AND exam_status = 'no_show'`,
+      [phone]
+    );
+    const count = Number(rows[0].cnt);
+    res.json({ hasNoShow: count > 0, count });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
 // Create a booking
 app.post('/api/bookings', async (req, res) => {
   const { id, name, age, gov, phone, date, time, procedure, status, polyp, ward, anesthesia, referrer, extraReserve } = req.body;
