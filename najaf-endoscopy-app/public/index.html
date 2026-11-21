@@ -488,6 +488,7 @@ table.plist tr:last-child td{border-bottom:none;}
 .exam-status-sel.exam-postponed{background:var(--gold-soft);color:#7A5A15;}
 .exam-status-sel.exam-cancelled{background:var(--red-soft);color:var(--red);}
 .exam-status-sel.exam-no_show{background:#DFF1E7;color:var(--green);}
+.exam-status-sel.exam-present{background:#E6F1FB;color:#185FA5;}
 tr.exam-postponed, tr.exam-cancelled{opacity:0.55;}
 tr.exam-cancelled td:not(:last-child):not(:nth-last-child(2)){text-decoration:line-through;}
 tr.exam-completed td{background:var(--red-soft);}
@@ -604,6 +605,11 @@ tr.exam-no_show td{background:#DFF1E7;}
           </div>
         </div>
 
+        <div id="anesthesiaApprovalWrap" class="polyp-row" style="display:none;">
+          <input type="checkbox" id="p_anesthesiaApproval">
+          <label for="p_anesthesiaApproval">أوافق طبيب التخدير على هذا الموعد (إلزامي لأي موعد تحت التخدير العام)</label>
+        </div>
+
         <div class="field" style="margin-top:14px;">
           <label>الجناح</label>
           <div class="seg" id="segWard">
@@ -644,6 +650,7 @@ tr.exam-no_show td{background:#DFF1E7;}
               <th>المنظار</th>
               <th>الحالة</th>
               <th>التخدير</th>
+              <th>موافقة طبيب التخدير</th>
               <th>الجناح</th>
               <th>حالة الفحص</th>
               <th></th>
@@ -660,8 +667,9 @@ tr.exam-no_show td{background:#DFF1E7;}
     السعة اليومية الكلية حتى يوم الجمعة ٢٧ نوفمبر ٢٠٢٦: ٢٠ مريضاً — منظار المعدة ١٢ (٨ أصلاء + ٤ احتياط) · منظار القولون ٨ (٤ أصلاء + ٤ احتياط). اعتبارًا من السبت ٢٨ نوفمبر ٢٠٢٦ تصبح السعة الكلية ١٢ مريضًا بشكل دائم — منظار المعدة ٨ (٥ أصلاء + ٣ احتياط) · منظار القولون ٤ (٢ أصلاء + ٢ احتياط). منظار معدة وقولون معًا: بلا سقف خاص به، لكنه يُحتسب مريضين اثنين من الإجمالي الكلي · التخدير العام في الجناح العام: ٣ فقط، وأي حالة أخرى (تخدير موضعي في الجناح العام، أو أي تخدير في الجناح الخاص) مفتوحة بلا سقف.<br>
     قائمة الاحتياط الإضافية: حقل اختياري بالنموذج، يُقفل الجناح تلقائيًا على "الخاص" ولا يُحتسب ضمن أي سقف — سعة مفتوحة دائمًا.<br>
     يمكن تغيير تاريخ ووقت أي حجز لاحقاً بالضغط على أيقونة التعديل ✎ في القائمة. هذه البيانات محفوظة في قاعدة بيانات حقيقية ومشتركة بين كل من يفتح هذا الرابط.<br>
-    حالة الفحص (في القائمة): "مكتمل" لتوثيق إنجاز الفحص، أما "مؤجل" و"ملغى" فيحرّران مكان المريض فوراً من كل حسابات السعة لذلك اليوم ليصبح متاحاً لمريض آخر.<br>
-    إذا كان رقم هاتف المريض مسجّلاً سابقاً بحالة "لم يتواجد بيوم الفحص"، يظهر تنبيه يطلب تأكيد الموافقة قبل حجز موعد جديد له (لا يظهر عند تعديل حجز موجود).
+    حالة الفحص (في القائمة): "مكتمل" لتوثيق إنجاز الفحص، "موجود بيوم الفحص" لتوثيق حضوره فقط، أما "مؤجل" و"ملغى" فيحرّران مكان المريض فوراً من كل حسابات السعة لذلك اليوم ليصبح متاحاً لمريض آخر.<br>
+    إذا كان رقم هاتف المريض مسجّلاً سابقاً بحالة "لم يتواجد بيوم الفحص"، يظهر تنبيه يطلب تأكيد الموافقة قبل حجز موعد جديد له (لا يظهر عند تعديل حجز موجود).<br>
+    عند اختيار "تخدير عام" يظهر مربع إلزامي لتأكيد موافقة طبيب التخدير على الموعد، ولا يمكن إتمام الحجز بدونه؛ القيمة تُحفظ وتظهر كعمود في القائمة.
   </div>
 </div>
 
@@ -701,6 +709,7 @@ let selStatus = 'original';
 let selWard = 'general';
 let selAnesthesia = 'general';
 let selExtraReserve = false;
+let selAnesthesiaApproval = false;
 let editingId = null;
 let editingOrigDate = null;
 
@@ -848,7 +857,7 @@ function fmtProcedure(p){ return p==='gastro' ? 'المعدة' : p==='colon' ? '
 function fmtStatus(s){ return s==='original' ? 'أصلي' : 'احتياط'; }
 function fmtWard(w){ return w==='general' ? 'عام' : 'خاص'; }
 function fmtAnesthesia(a){ return a==='general' ? 'عام' : 'موضعي'; }
-const EXAM_STATUS_LABELS = { pending:'قيد الانتظار', completed:'مكتمل', postponed:'مؤجل', cancelled:'ملغى', no_show:'لم يتواجد بيوم الفحص' };
+const EXAM_STATUS_LABELS = { pending:'قيد الانتظار', completed:'مكتمل', postponed:'مؤجل', cancelled:'ملغى', no_show:'لم يتواجد بيوم الفحص', present:'موجود بيوم الفحص' };
 
 // ---------- render ----------
 function renderDateNav(){
@@ -948,6 +957,7 @@ function renderTable(list){
       <td><span class="tag ${p.procedure}">${fmtProcedure(p.procedure)}</span></td>
       <td><span class="tag ${p.status}">${fmtStatus(p.status)}</span></td>
       <td>${fmtAnesthesia(p.anesthesia)}</td>
+      <td>${p.anesthesia==='general' ? (p.anesthesiologistApproval ? '<span class="tag original">موافَق ✓</span>' : '<span class="tag reserve">غير موافَق</span>') : '—'}</td>
       <td>${fmtWard(p.ward)}${p.extraReserve?' <span class="tag both">احتياط إضافي</span>':''}</td>
       <td>
         <select class="exam-status-sel exam-${p.examStatus}" data-id="${p.id}" title="لا يُحتسب ضمن السعة عند التأجيل أو الإلغاء">
@@ -1018,6 +1028,7 @@ function renderForm(counts){
     b.classList.toggle('sel', b.dataset.val===selAnesthesia);
   });
   document.getElementById('polypWrap').style.display = (selProcedure==='colon'||selProcedure==='both') ? 'block' : 'none';
+  document.getElementById('anesthesiaApprovalWrap').style.display = selAnesthesia==='general' ? 'flex' : 'none';
 
   const meta = dayMeta(limitDate);
   const dayFull = !selExtraReserve && (counts.total + totalWeight(selProcedure) > TOTAL_LIMIT);
@@ -1066,11 +1077,13 @@ function startEdit(patient){
   document.getElementById('p_time').value = patient.time;
   document.getElementById('p_polyp').checked = !!patient.polyp;
   document.getElementById('p_extraReserve').checked = !!patient.extraReserve;
+  document.getElementById('p_anesthesiaApproval').checked = !!patient.anesthesiologistApproval;
   selProcedure = patient.procedure;
   selStatus = patient.status;
   selWard = patient.ward;
   selAnesthesia = patient.anesthesia;
   selExtraReserve = !!patient.extraReserve;
+  selAnesthesiaApproval = !!patient.anesthesiologistApproval;
   document.getElementById('editBanner').style.display = 'flex';
   document.getElementById('okMsg').style.display='none';
   document.getElementById('errMsg').style.display='none';
@@ -1083,7 +1096,7 @@ function cancelEdit(){
   editingOrigDate = null;
   document.getElementById('editBanner').style.display = 'none';
   document.getElementById('bookForm').reset();
-  selProcedure='gastro'; selStatus='original'; selWard='general'; selAnesthesia='general'; selExtraReserve=false;
+  selProcedure='gastro'; selStatus='original'; selWard='general'; selAnesthesia='general'; selExtraReserve=false; selAnesthesiaApproval=false;
 }
 document.getElementById('cancelEditBtn').addEventListener('click', async ()=>{ cancelEdit(); await renderAll(); });
 
@@ -1107,7 +1120,14 @@ document.getElementById('segWard').addEventListener('click', e=>{
 document.getElementById('segAnesthesia').addEventListener('click', e=>{
   const btn = e.target.closest('button'); if(!btn) return;
   selAnesthesia = btn.dataset.val;
+  if(selAnesthesia!=='general'){
+    selAnesthesiaApproval = false;
+    document.getElementById('p_anesthesiaApproval').checked = false;
+  }
   refreshFormOnly();
+});
+document.getElementById('p_anesthesiaApproval').addEventListener('change', e=>{
+  selAnesthesiaApproval = e.target.checked;
 });
 document.getElementById('p_extraReserve').addEventListener('change', e=>{
   selExtraReserve = e.target.checked;
@@ -1151,6 +1171,11 @@ document.getElementById('bookForm').addEventListener('submit', async (e)=>{
     errBox.style.display='block';
     return;
   }
+  if(selAnesthesia==='general' && !selAnesthesiaApproval){
+    errBox.textContent = 'يلزم تأكيد موافقة طبيب التخدير قبل حجز موعد تحت التخدير العام';
+    errBox.style.display='block';
+    return;
+  }
   const meta = dayMeta(date);
   if(meta.closed){
     errBox.textContent = `${meta.closedReason}، الرجاء اختيار تاريخ آخر`;
@@ -1166,7 +1191,7 @@ document.getElementById('bookForm').addEventListener('submit', async (e)=>{
     }
   }
 
-  const payload = { name, age:Number(age), gov, phone, date, time, procedure:selProcedure, status:selStatus, polyp, ward:selWard, anesthesia:selAnesthesia, referrer, extraReserve:selExtraReserve };
+  const payload = { name, age:Number(age), gov, phone, date, time, procedure:selProcedure, status:selStatus, polyp, ward:selWard, anesthesia:selAnesthesia, referrer, extraReserve:selExtraReserve, anesthesiologistApproval:selAnesthesiaApproval };
 
   try{
     if(editingId){
@@ -1181,7 +1206,7 @@ document.getElementById('bookForm').addEventListener('submit', async (e)=>{
       okBox.style.display='block';
       document.getElementById('bookForm').reset();
       document.getElementById('p_gov').value = gov;
-      selProcedure='gastro'; selStatus='original'; selWard='general'; selAnesthesia='general'; selExtraReserve=false;
+      selProcedure='gastro'; selStatus='original'; selWard='general'; selAnesthesia='general'; selExtraReserve=false; selAnesthesiaApproval=false;
     }
     await renderAll();
     await refreshReferrerList();

@@ -72,21 +72,23 @@ async function initDb() {
       polyp BOOLEAN NOT NULL DEFAULT false,
       ward TEXT NOT NULL CHECK (ward IN ('general','private')),
       anesthesia TEXT NOT NULL DEFAULT 'general' CHECK (anesthesia IN ('general','local')),
-      exam_status TEXT NOT NULL DEFAULT 'pending' CHECK (exam_status IN ('pending','completed','postponed','cancelled','no_show')),
+      exam_status TEXT NOT NULL DEFAULT 'pending' CHECK (exam_status IN ('pending','completed','postponed','cancelled','no_show','present')),
       referrer TEXT NOT NULL DEFAULT '',
       extra_reserve BOOLEAN NOT NULL DEFAULT false,
+      anesthesiologist_approval BOOLEAN NOT NULL DEFAULT false,
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
   `);
-  // Migrations for databases created before 'both' procedure, anesthesia, exam_status, referrer and extra_reserve existed.
+  // Migrations for databases created before 'both' procedure, anesthesia, exam_status, referrer, extra_reserve and anesthesiologist_approval existed.
   await pool.query(`ALTER TABLE bookings DROP CONSTRAINT IF EXISTS bookings_procedure_check;`);
   await pool.query(`ALTER TABLE bookings ADD CONSTRAINT bookings_procedure_check CHECK (procedure IN ('gastro','colon','both'));`);
   await pool.query(`ALTER TABLE bookings ADD COLUMN IF NOT EXISTS anesthesia TEXT NOT NULL DEFAULT 'general' CHECK (anesthesia IN ('general','local'));`);
-  await pool.query(`ALTER TABLE bookings ADD COLUMN IF NOT EXISTS exam_status TEXT NOT NULL DEFAULT 'pending' CHECK (exam_status IN ('pending','completed','postponed','cancelled','no_show'));`);
+  await pool.query(`ALTER TABLE bookings ADD COLUMN IF NOT EXISTS exam_status TEXT NOT NULL DEFAULT 'pending' CHECK (exam_status IN ('pending','completed','postponed','cancelled','no_show','present'));`);
   await pool.query(`ALTER TABLE bookings DROP CONSTRAINT IF EXISTS bookings_exam_status_check;`);
-  await pool.query(`ALTER TABLE bookings ADD CONSTRAINT bookings_exam_status_check CHECK (exam_status IN ('pending','completed','postponed','cancelled','no_show'));`);
+  await pool.query(`ALTER TABLE bookings ADD CONSTRAINT bookings_exam_status_check CHECK (exam_status IN ('pending','completed','postponed','cancelled','no_show','present'));`);
   await pool.query(`ALTER TABLE bookings ADD COLUMN IF NOT EXISTS referrer TEXT NOT NULL DEFAULT '';`);
   await pool.query(`ALTER TABLE bookings ADD COLUMN IF NOT EXISTS extra_reserve BOOLEAN NOT NULL DEFAULT false;`);
+  await pool.query(`ALTER TABLE bookings ADD COLUMN IF NOT EXISTS anesthesiologist_approval BOOLEAN NOT NULL DEFAULT false;`);
   await pool.query(`CREATE INDEX IF NOT EXISTS idx_bookings_date ON bookings(booking_date);`);
 }
 
@@ -106,7 +108,8 @@ function rowToPatient(r) {
     anesthesia: r.anesthesia,
     examStatus: r.exam_status,
     referrer: r.referrer,
-    extraReserve: r.extra_reserve
+    extraReserve: r.extra_reserve,
+    anesthesiologistApproval: r.anesthesiologist_approval
   };
 }
 
@@ -219,9 +222,12 @@ app.get('/api/patients/no-show-check', async (req, res) => {
 
 // Create a booking
 app.post('/api/bookings', async (req, res) => {
-  const { id, name, age, gov, phone, date, time, procedure, status, polyp, ward, anesthesia, referrer, extraReserve } = req.body;
+  const { id, name, age, gov, phone, date, time, procedure, status, polyp, ward, anesthesia, referrer, extraReserve, anesthesiologistApproval } = req.body;
   if (!name || !age || !gov || !phone || !date || !time || !procedure || !status || !ward || !anesthesia || !(referrer || '').trim()) {
     return res.status(400).json({ error: 'الرجاء تعبئة جميع الحقول المطلوبة، بما فيها الجهة المحيلة' });
+  }
+  if (anesthesia === 'general' && !anesthesiologistApproval) {
+    return res.status(400).json({ error: 'يلزم موافقة طبيب التخدير قبل حجز موعد تحت التخدير العام' });
   }
   if (CLOSED_DATES[date]) {
     return res.status(409).json({ error: `${CLOSED_DATES[date]}، الرجاء اختيار تاريخ آخر` });
@@ -254,9 +260,9 @@ app.post('/api/bookings', async (req, res) => {
 
     const newId = id || ('p_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8));
     await pool.query(
-      `INSERT INTO bookings (id, name, age, governorate, phone, booking_date, booking_time, procedure, status, polyp, ward, anesthesia, referrer, extra_reserve)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`,
-      [newId, name, age, gov, phone, date, time, procedure, status, !!polyp, effectiveWard, anesthesia, (referrer || '').trim(), !!extraReserve]
+      `INSERT INTO bookings (id, name, age, governorate, phone, booking_date, booking_time, procedure, status, polyp, ward, anesthesia, referrer, extra_reserve, anesthesiologist_approval)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)`,
+      [newId, name, age, gov, phone, date, time, procedure, status, !!polyp, effectiveWard, anesthesia, (referrer || '').trim(), !!extraReserve, anesthesia === 'general' ? !!anesthesiologistApproval : false]
     );
     res.status(201).json({ ok: true, id: newId });
   } catch (e) {
@@ -268,9 +274,12 @@ app.post('/api/bookings', async (req, res) => {
 // Update a booking (including moving its date/time)
 app.put('/api/bookings/:id', async (req, res) => {
   const { id } = req.params;
-  const { name, age, gov, phone, date, time, procedure, status, polyp, ward, anesthesia, referrer, extraReserve } = req.body;
+  const { name, age, gov, phone, date, time, procedure, status, polyp, ward, anesthesia, referrer, extraReserve, anesthesiologistApproval } = req.body;
   if (!name || !age || !gov || !phone || !date || !time || !procedure || !status || !ward || !anesthesia || !(referrer || '').trim()) {
     return res.status(400).json({ error: 'الرجاء تعبئة جميع الحقول المطلوبة، بما فيها الجهة المحيلة' });
+  }
+  if (anesthesia === 'general' && !anesthesiologistApproval) {
+    return res.status(400).json({ error: 'يلزم موافقة طبيب التخدير قبل حجز موعد تحت التخدير العام' });
   }
   if (CLOSED_DATES[date]) {
     return res.status(409).json({ error: `${CLOSED_DATES[date]}، الرجاء اختيار تاريخ آخر` });
@@ -301,8 +310,8 @@ app.put('/api/bookings/:id', async (req, res) => {
 
     const result = await pool.query(
       `UPDATE bookings SET name=$1, age=$2, governorate=$3, phone=$4, booking_date=$5,
-       booking_time=$6, procedure=$7, status=$8, polyp=$9, ward=$10, anesthesia=$11, referrer=$12, extra_reserve=$13 WHERE id=$14`,
-      [name, age, gov, phone, date, time, procedure, status, !!polyp, effectiveWard, anesthesia, (referrer || '').trim(), !!extraReserve, id]
+       booking_time=$6, procedure=$7, status=$8, polyp=$9, ward=$10, anesthesia=$11, referrer=$12, extra_reserve=$13, anesthesiologist_approval=$14 WHERE id=$15`,
+      [name, age, gov, phone, date, time, procedure, status, !!polyp, effectiveWard, anesthesia, (referrer || '').trim(), !!extraReserve, anesthesia === 'general' ? !!anesthesiologistApproval : false, id]
     );
     if (result.rowCount === 0) return res.status(404).json({ error: 'الحجز غير موجود' });
     res.json({ ok: true });
@@ -317,7 +326,7 @@ app.put('/api/bookings/:id', async (req, res) => {
 app.patch('/api/bookings/:id/exam-status', async (req, res) => {
   const { id } = req.params;
   const { examStatus } = req.body;
-  const allowed = ['pending', 'completed', 'postponed', 'cancelled', 'no_show'];
+  const allowed = ['pending', 'completed', 'postponed', 'cancelled', 'no_show', 'present'];
   if (!allowed.includes(examStatus)) {
     return res.status(400).json({ error: 'حالة فحص غير صالحة' });
   }
