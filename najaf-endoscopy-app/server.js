@@ -25,29 +25,30 @@ const pool = new Pool({
 });
 
 // --- Capacity rules (mirrors the frontend) ---
-// Starting 2027-01-01 the daily total drops from 20 to 15, with every
-// procedure category reduced by the same 25% (ward_general is unchanged).
-// Dates before that keep the original 2026 limits.
-const LIMITS_2026 = {
+// Starting 2026-11-28 the daily total drops from 20 to 12 permanently
+// (5 gastro original + 3 gastro reserve + 2 colon original + 2 colon reserve
+// = 8 gastro + 4 colon = 12). This supersedes the earlier 2027-01-01 plan.
+// Dates before the cutover keep the original limits.
+const LIMITS_BEFORE = {
   gastro_original: 8,
   gastro_reserve: 4,
   colon_original: 4,
   colon_reserve: 4,
   ward_general: 3
 };
-const LIMITS_2027 = {
-  gastro_original: 6,
+const LIMITS_AFTER = {
+  gastro_original: 5,
   gastro_reserve: 3,
-  colon_original: 3,
-  colon_reserve: 3,
+  colon_original: 2,
+  colon_reserve: 2,
   ward_general: 3
 };
-const LIMITS_CUTOVER_DATE = '2027-01-01';
+const LIMITS_CUTOVER_DATE = '2026-11-28';
 function limitsForDate(dateStr) {
-  return dateStr >= LIMITS_CUTOVER_DATE ? LIMITS_2027 : LIMITS_2026;
+  return dateStr >= LIMITS_CUTOVER_DATE ? LIMITS_AFTER : LIMITS_BEFORE;
 }
 function totalLimitForDate(dateStr) {
-  return dateStr >= LIMITS_CUTOVER_DATE ? 15 : 20;
+  return dateStr >= LIMITS_CUTOVER_DATE ? 12 : 20;
 }
 
 // Specific dates closed entirely (mirrors the frontend's CLOSED_DATES), e.g. a

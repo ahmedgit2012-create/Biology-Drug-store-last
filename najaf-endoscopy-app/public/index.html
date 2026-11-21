@@ -657,7 +657,7 @@ tr.exam-no_show td{background:#DFF1E7;}
   </div>
 
   <div class="foot-note">
-    السعة اليومية الكلية حتى نهاية ٢٠٢٦: ٢٠ مريضاً — منظار المعدة ١٢ (٨ أصلاء + ٤ احتياط) · منظار القولون ٨ (٤ أصلاء + ٤ احتياط). اعتبارًا من ١ يناير ٢٠٢٧ تصبح السعة الكلية ١٥ مريضًا — منظار المعدة ٩ (٦ أصلاء + ٣ احتياط) · منظار القولون ٦ (٣ أصلاء + ٣ احتياط). منظار معدة وقولون معًا: بلا سقف خاص به، لكنه يُحتسب مريضين اثنين من الإجمالي الكلي · التخدير العام في الجناح العام: ٣ فقط، وأي حالة أخرى (تخدير موضعي في الجناح العام، أو أي تخدير في الجناح الخاص) مفتوحة بلا سقف.<br>
+    السعة اليومية الكلية حتى يوم الجمعة ٢٧ نوفمبر ٢٠٢٦: ٢٠ مريضاً — منظار المعدة ١٢ (٨ أصلاء + ٤ احتياط) · منظار القولون ٨ (٤ أصلاء + ٤ احتياط). اعتبارًا من السبت ٢٨ نوفمبر ٢٠٢٦ تصبح السعة الكلية ١٢ مريضًا بشكل دائم — منظار المعدة ٨ (٥ أصلاء + ٣ احتياط) · منظار القولون ٤ (٢ أصلاء + ٢ احتياط). منظار معدة وقولون معًا: بلا سقف خاص به، لكنه يُحتسب مريضين اثنين من الإجمالي الكلي · التخدير العام في الجناح العام: ٣ فقط، وأي حالة أخرى (تخدير موضعي في الجناح العام، أو أي تخدير في الجناح الخاص) مفتوحة بلا سقف.<br>
     قائمة الاحتياط الإضافية: حقل اختياري بالنموذج، يُقفل الجناح تلقائيًا على "الخاص" ولا يُحتسب ضمن أي سقف — سعة مفتوحة دائمًا.<br>
     يمكن تغيير تاريخ ووقت أي حجز لاحقاً بالضغط على أيقونة التعديل ✎ في القائمة. هذه البيانات محفوظة في قاعدة بيانات حقيقية ومشتركة بين كل من يفتح هذا الرابط.<br>
     حالة الفحص (في القائمة): "مكتمل" لتوثيق إنجاز الفحص، أما "مؤجل" و"ملغى" فيحرّران مكان المريض فوراً من كل حسابات السعة لذلك اليوم ليصبح متاحاً لمريض آخر.<br>
@@ -685,14 +685,13 @@ const CLOSED_DATES = {
 const GOVERNORATES = ['النجف الأشرف','بغداد','البصرة','نينوى','أربيل','كربلاء','بابل','ديالى','الأنبار',
   'ذي قار','ميسان','واسط','صلاح الدين','كركوك','القادسية','المثنى','دهوك','السليمانية'];
 
-// Starting 2027-01-01 the daily total drops from 20 to 15, with every
-// procedure category reduced by the same 25% (ward_general is unchanged).
-// Dates before that keep the original 2026 limits.
-const LIMITS_2026 = { gastro_original:8, gastro_reserve:4, colon_original:4, colon_reserve:4, ward_general:3 };
-const LIMITS_2027 = { gastro_original:6, gastro_reserve:3, colon_original:3, colon_reserve:3, ward_general:3 };
-const LIMITS_CUTOVER_DATE = '2027-01-01';
-function limitsForDate(dateStr){ return dateStr>=LIMITS_CUTOVER_DATE ? LIMITS_2027 : LIMITS_2026; }
-function totalLimitForDate(dateStr){ return dateStr>=LIMITS_CUTOVER_DATE ? 15 : 20; }
+// Starting 2026-11-28 the daily total drops from 20 to 12 permanently
+// (8 gastro + 4 colon). This supersedes the earlier 2027-01-01 plan.
+const LIMITS_BEFORE = { gastro_original:8, gastro_reserve:4, colon_original:4, colon_reserve:4, ward_general:3 };
+const LIMITS_AFTER = { gastro_original:5, gastro_reserve:3, colon_original:2, colon_reserve:2, ward_general:3 };
+const LIMITS_CUTOVER_DATE = '2026-11-28';
+function limitsForDate(dateStr){ return dateStr>=LIMITS_CUTOVER_DATE ? LIMITS_AFTER : LIMITS_BEFORE; }
+function totalLimitForDate(dateStr){ return dateStr>=LIMITS_CUTOVER_DATE ? 12 : 20; }
 
 let selectedDate = ymd(new Date());
 let currentList = [];
